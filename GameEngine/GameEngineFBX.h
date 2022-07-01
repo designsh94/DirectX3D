@@ -3,6 +3,7 @@
 // 라이브러리내부 경고제거
 #pragma warning(push)
 #pragma warning(disable:26495)
+#pragma warning(disable:26451)
 
 #include <fbxsdk.h>
 
