@@ -148,15 +148,6 @@
     <Filter Include="RenderingPipeLine\RenderingPipeLine\RenderingPipeLineSettingCheck">
       <UniqueIdentifier>{ddea0a95-4bbc-41cd-9c9b-fe5f1ac4b7c5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resources\00Buffer\Mesh">
-      <UniqueIdentifier>{579d8022-3f10-4402-9fb8-4bacb8ee7918}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Resources\00Buffer\Mesh\Vertex">
-      <UniqueIdentifier>{1bb2f4d9-f03a-4431-b80d-57f36611daab}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Resources\00Buffer\Mesh\Index">
-      <UniqueIdentifier>{5b32f754-a64e-4ade-9a06-a84bdef94caf}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Resources\02Image\RenderTarget">
       <UniqueIdentifier>{9942c210-c9cf-481b-8865-5cce2a75057e}</UniqueIdentifier>
     </Filter>
@@ -285,6 +276,12 @@
     </Filter>
     <Filter Include="Lib\FBX\Release">
       <UniqueIdentifier>{64e8e5f5-b18c-4511-821c-f1534c2ce81c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\00Buffer\Vertex">
+      <UniqueIdentifier>{1bb2f4d9-f03a-4431-b80d-57f36611daab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\00Buffer\Index">
+      <UniqueIdentifier>{5b32f754-a64e-4ade-9a06-a84bdef94caf}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -432,14 +429,11 @@
     <ClInclude Include="GameEngineShaderResHelper.h">
       <Filter>RenderingPipeLine\RenderingPipeLine\RenderingPipeLineSettingCheck</Filter>
     </ClInclude>
-    <ClInclude Include="GameEngineMesh.h">
-      <Filter>Resources\00Buffer\Mesh</Filter>
-    </ClInclude>
     <ClInclude Include="GameEngineIndexBuffer.h">
-      <Filter>Resources\00Buffer\Mesh\Index</Filter>
+      <Filter>Resources\00Buffer\Index</Filter>
     </ClInclude>
     <ClInclude Include="GameEngineVertexBuffer.h">
-      <Filter>Resources\00Buffer\Mesh\Vertex</Filter>
+      <Filter>Resources\00Buffer\Vertex</Filter>
     </ClInclude>
     <ClInclude Include="GameEnginePixelShader.h">
       <Filter>Resources\01Shader\Pixel</Filter>
@@ -686,14 +680,11 @@
     <ClCompile Include="GameEngineShaderResHelper.cpp">
       <Filter>RenderingPipeLine\RenderingPipeLine\RenderingPipeLineSettingCheck</Filter>
     </ClCompile>
-    <ClCompile Include="GameEngineMesh.cpp">
-      <Filter>Resources\00Buffer\Mesh</Filter>
-    </ClCompile>
     <ClCompile Include="GameEngineIndexBuffer.cpp">
-      <Filter>Resources\00Buffer\Mesh\Index</Filter>
+      <Filter>Resources\00Buffer\Index</Filter>
     </ClCompile>
     <ClCompile Include="GameEngineVertexBuffer.cpp">
-      <Filter>Resources\00Buffer\Mesh\Vertex</Filter>
+      <Filter>Resources\00Buffer\Vertex</Filter>
     </ClCompile>
     <ClCompile Include="GameEnginePixelShader.cpp">
       <Filter>Resources\01Shader\Pixel</Filter>

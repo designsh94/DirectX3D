@@ -136,10 +136,6 @@
       <SubType>
       </SubType>
     </ClInclude>
-    <ClInclude Include="GameEngineMesh.h">
-      <SubType>
-      </SubType>
-    </ClInclude>
     <ClInclude Include="GameEnginePixelShader.h">
       <SubType>
       </SubType>
@@ -387,10 +383,6 @@
       </SubType>
     </ClCompile>
     <ClCompile Include="GameEngineLightComponent.cpp">
-      <SubType>
-      </SubType>
-    </ClCompile>
-    <ClCompile Include="GameEngineMesh.cpp">
       <SubType>
       </SubType>
     </ClCompile>
