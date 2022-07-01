@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="Appmain.cpp" />
+    <ClCompile Include="PreCompile.cpp">
+      <Filter>Precom</Filter>
+    </ClCompile>
+    <ClCompile Include="UserGame.cpp">
+      <Filter>UserCore</Filter>
+    </ClCompile>
+    <ClCompile Include="UserGame_Resources.cpp">
+      <Filter>UserCore</Filter>
+    </ClCompile>
+    <ClCompile Include="UserGame_Resources_Shader.cpp">
+      <Filter>UserCore\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="Map.cpp">
+      <Filter>Actor\Global</Filter>
+    </ClCompile>
+    <ClCompile Include="FBXLevel.cpp">
+      <Filter>Level\FBX</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Precom">
+      <UniqueIdentifier>{0d0b75c7-5726-42b1-aa92-879451e131c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UserCore">
+      <UniqueIdentifier>{ae1c99fc-5ae2-4958-9205-8018fcb509b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CustomVertex">
+      <UniqueIdentifier>{16842167-2534-42db-8026-796a267ad72b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UserCore\Resources">
+      <UniqueIdentifier>{097aabc9-6df0-4d53-a9ed-77681a8002e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Level">
+      <UniqueIdentifier>{e6998438-49d5-445a-83ae-2e78e52a45df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Actor">
+      <UniqueIdentifier>{5b1798ae-0845-4fbe-8a16-76e0e38dd1a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Actor\FBX">
+      <UniqueIdentifier>{28035281-b57a-41f0-bf5a-cf467c3b0e0b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Level\FBX">
+      <UniqueIdentifier>{3be04ba6-7a62-4565-873a-4bede43839e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Actor\Global">
+      <UniqueIdentifier>{77ee2dc4-59df-4ab9-95fe-30c2ab1c8d34}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="PreCompile.h">
+      <Filter>Precom</Filter>
+    </ClInclude>
+    <ClInclude Include="UserGame.h">
+      <Filter>UserCore</Filter>
+    </ClInclude>
+    <ClInclude Include="CustomVertex.h">
+      <Filter>CustomVertex</Filter>
+    </ClInclude>
+    <ClInclude Include="UserGame_Resources_Shader.h">
+      <Filter>UserCore\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Map.h">
+      <Filter>Actor\Global</Filter>
+    </ClInclude>
+    <ClInclude Include="FBXLevel.h">
+      <Filter>Level\FBX</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

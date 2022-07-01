@@ -1,0 +1,179 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="PreCompile.h">
+      <Filter>Precom</Filter>
+    </ClInclude>
+    <ClInclude Include="GameEngineObjectBase.h">
+      <Filter>Object</Filter>
+    </ClInclude>
+    <ClInclude Include="GameEngineObjectNameBase.h">
+      <Filter>Object</Filter>
+    </ClInclude>
+    <ClInclude Include="GameEnginePath.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="GameEngineFile.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="GameEngineTime.h">
+      <Filter>Time</Filter>
+    </ClInclude>
+    <ClInclude Include="GameEngineDebug.h">
+      <Filter>Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="GameEngineSoundManager.h">
+      <Filter>Midia</Filter>
+    </ClInclude>
+    <ClInclude Include="GameEngineSoundPlayer.h">
+      <Filter>Midia</Filter>
+    </ClInclude>
+    <ClInclude Include="GameEngineString.h">
+      <Filter>String</Filter>
+    </ClInclude>
+    <ClInclude Include="GameEngineMath.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="GameEngineThread.h">
+      <Filter>Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="GameEngineIocp.h">
+      <Filter>Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="GameEngineThreadQueue.h">
+      <Filter>Thread</Filter>
+    </ClInclude>
+    <ClInclude Include="GameEngineDirectory.h">
+      <Filter>IO</Filter>
+    </ClInclude>
+    <ClInclude Include="GameEnginePathFind.h">
+      <Filter>Math\Navigation</Filter>
+    </ClInclude>
+    <ClInclude Include="GameEngineRandom.h">
+      <Filter>Math\Random</Filter>
+    </ClInclude>
+    <ClInclude Include="GameEngineSound.h">
+      <Filter>Midia\Load</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="PreCompile.cpp">
+      <Filter>Precom</Filter>
+    </ClCompile>
+    <ClCompile Include="GameEngineObjectBase.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="GameEngineObjectNameBase.cpp">
+      <Filter>Object</Filter>
+    </ClCompile>
+    <ClCompile Include="GameEngineFile.cpp">
+      <Filter>IO</Filter>
+    </ClCompile>
+    <ClCompile Include="GameEnginePath.cpp">
+      <Filter>IO</Filter>
+    </ClCompile>
+    <ClCompile Include="GameEngineTime.cpp">
+      <Filter>Time</Filter>
+    </ClCompile>
+    <ClCompile Include="GameEngineDebug.cpp">
+      <Filter>Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GameEngineSoundPlayer.cpp">
+      <Filter>Midia</Filter>
+    </ClCompile>
+    <ClCompile Include="GameEngineSoundManager.cpp">
+      <Filter>Midia</Filter>
+    </ClCompile>
+    <ClCompile Include="GameEngineString.cpp">
+      <Filter>String</Filter>
+    </ClCompile>
+    <ClCompile Include="GameEngineMath.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="GameEngineThread.cpp">
+      <Filter>Thread</Filter>
+    </ClCompile>
+    <ClCompile Include="GameEngineIocp.cpp">
+      <Filter>Thread</Filter>
+    </ClCompile>
+    <ClCompile Include="GameEngineThreadQueue.cpp">
+      <Filter>Thread</Filter>
+    </ClCompile>
+    <ClCompile Include="GameEngineDirectory.cpp">
+      <Filter>IO</Filter>
+    </ClCompile>
+    <ClCompile Include="GameEnginePathFind.cpp">
+      <Filter>Math\Navigation</Filter>
+    </ClCompile>
+    <ClCompile Include="GameEngineRandom.cpp">
+      <Filter>Math\Random</Filter>
+    </ClCompile>
+    <ClCompile Include="GameEngineSound.cpp">
+      <Filter>Midia\Load</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Precom">
+      <UniqueIdentifier>{6038bb73-46ee-4717-abcf-ec990985223a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Object">
+      <UniqueIdentifier>{da0cd900-cafe-4fae-b592-2961041b26c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="IO">
+      <UniqueIdentifier>{dc8582b1-46bd-4031-b80d-660116d4471c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Time">
+      <UniqueIdentifier>{6e718ba4-ed4e-4f3a-8082-697982dd4b1d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Debug">
+      <UniqueIdentifier>{c483dc05-afbc-42c8-a78f-32477801ba44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Math">
+      <UniqueIdentifier>{7fef56fa-182c-4929-9344-5fe6d40100c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Midia">
+      <UniqueIdentifier>{7e82b16e-2dc5-4f55-a1d4-e84fbbee7c9f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lib">
+      <UniqueIdentifier>{9f34ff00-87d7-4f01-844a-989cc585df57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lib\FMOD">
+      <UniqueIdentifier>{c9e4a3c1-a52c-4401-9ffa-857fb0d096f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lib\FMOD\Release">
+      <UniqueIdentifier>{e53dc9e8-8675-4ea5-bbbb-6bfdc6798d8f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lib\FMOD\Debug">
+      <UniqueIdentifier>{7b47705d-bddd-45e4-8f62-bbfdb8daa55a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="String">
+      <UniqueIdentifier>{449ccbeb-02fe-409a-8c5a-974793385175}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Thread">
+      <UniqueIdentifier>{53eef9a6-d584-42d0-a800-91da307677cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Math\Navigation">
+      <UniqueIdentifier>{e24f0435-22d7-41ac-9911-9ffd4031e766}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Math\Random">
+      <UniqueIdentifier>{1eb63601-ea76-4c7c-a4d6-3109e397bb66}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Midia\Load">
+      <UniqueIdentifier>{d66862cc-fc76-47f1-8217-aa0700ca095f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="..\ThirdParty\x64\Release\FMOD\fmod.dll">
+      <Filter>Lib\FMOD\Release</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\ThirdParty\x64\Release\FMOD\fmod_vc.lib">
+      <Filter>Lib\FMOD\Release</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\ThirdParty\x64\Debug\FMOD\fmodL.dll">
+      <Filter>Lib\FMOD\Debug</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\ThirdParty\x64\Debug\FMOD\fmodL_vc.lib">
+      <Filter>Lib\FMOD\Debug</Filter>
+    </CopyFileToFolders>
+  </ItemGroup>
+</Project>
