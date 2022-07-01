@@ -70,7 +70,16 @@ public:
 
 
 public:
-	FbxExAniData() : AniName(""), StartTime(0), EndTime(0), TimeStartCount(0), TimeEndCount(0), FrameCount(0), FbxModeCount(0), FbxModeRate(0.0)
+	FbxExAniData() :
+		AniName(""), 
+		StartTime(0), 
+		EndTime(0), 
+		TimeStartCount(0), 
+		TimeEndCount(0),
+		FrameCount(0),
+		FbxModeCount(0), 
+		FbxModeRate(0.0),
+		TimeMode()
 	{
 	}
 

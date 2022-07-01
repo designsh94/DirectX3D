@@ -69,7 +69,7 @@ bool GameEngineFBXAnimation::CheckAnimation()
 	}
 
 	// fbxsdk::FbxArray<FbxString*>의 사용한 메모리를 직접 제거해야한다.
-	for (size_t i = 0; i < AniNameArray.GetCount(); i++)
+	for (int i = 0; i < AniNameArray.GetCount(); i++)
 	{
 		delete AniNameArray[i];
 	}

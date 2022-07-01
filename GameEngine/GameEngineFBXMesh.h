@@ -28,12 +28,17 @@ public:
 	std::string NorTexturePath; // 텍스처경로
 	std::string SpcTexturePath; // 텍스처경로
 
-	std::string DifTextureName;	// 텍스처경로 
-	std::string NorTextureName; // 텍스처경로
-	std::string SpcTextureName; // 텍스처경로
+	std::string DifTextureName;	// 텍스처이름 
+	std::string NorTextureName; // 텍스처이름
+	std::string SpcTextureName; // 텍스처이름
 
 public:
-	FbxExRenderingPipeLineSettingData()
+	FbxExRenderingPipeLineSettingData() :
+		Name(),													// std::string
+		DifColor(), AmbColor(), SpcColor(), EmvColor(),			// float4
+		SpecularPower(), TransparencyFactor(), Shininess(),		// float
+		DifTexturePath(), NorTexturePath(), SpcTexturePath(),	// std::string
+		DifTextureName(), NorTextureName(), SpcTextureName()	// std::string
 	{
 	}
 
