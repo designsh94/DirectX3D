@@ -829,9 +829,6 @@
     <CopyFileToFolders Include="..\ThirdParty\x64\Release\FBX\libfbxsdk-md.lib">
       <Filter>Lib\FBX\Release</Filter>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="..\ThirdParty\x64\Release\FBX\libfbxsdk-mt.lib">
-      <Filter>Lib\FBX\Release</Filter>
-    </CopyFileToFolders>
     <CopyFileToFolders Include="..\ThirdParty\x64\Release\FBX\libxml2-md.lib">
       <Filter>Lib\FBX\Release</Filter>
     </CopyFileToFolders>
@@ -854,9 +851,6 @@
       <Filter>Lib\FBX\Debug</Filter>
     </CopyFileToFolders>
     <CopyFileToFolders Include="..\ThirdParty\x64\Debug\FBX\libfbxsdk-md.lib">
-      <Filter>Lib\FBX\Debug</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="..\ThirdParty\x64\Debug\FBX\libfbxsdk-mt.lib">
       <Filter>Lib\FBX\Debug</Filter>
     </CopyFileToFolders>
     <CopyFileToFolders Include="..\ThirdParty\x64\Debug\FBX\libxml2-md.lib">
