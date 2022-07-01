@@ -93,11 +93,6 @@ void FBXLevel::LevelUpdate(float _DeltaTime)
 	{
 		GetMainCameraActor()->FreeCameraModeSwitch();
 	}
-
-	//if (true == GetMainCameraActor()->IsFreeCameraMode())
-	//{
-	//	return;
-	//}
 }
 
 void FBXLevel::LevelChangeEndEvent(GameEngineLevel* _NextLevel)
