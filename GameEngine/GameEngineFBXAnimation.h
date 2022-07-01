@@ -1,6 +1,7 @@
 #pragma once
 #include "GameEngineFBX.h"
 #include "EngineVertex.h"
+#include "GameEngineFBXMesh.h"
 
 class FbxExBoneFrameData
 {
@@ -41,7 +42,7 @@ public:
 	__int64					FbxModeCount;
 	double					FbxModeRate;
 
-	std::vector<FbxExBoneFrame> m_AniFrameData;	// Ex) 애니메이션에 100개의 본의 애니메이션 데이터가 있다.
+	std::vector<FbxExBoneFrame> AniFrameData;	// Ex) 애니메이션에 100개의 본의 애니메이션 데이터가 있다.
 
 public:
 	float FrameTime(int _Frame)
@@ -102,6 +103,10 @@ private:
 public:
 	bool LoadAnimation();
 	void Load(const std::string& _Path);
+
+public:
+	bool CreateAnimationInfo(const std::string& _MeshName);
+	bool AnimationLoad(GameEngineFBXMesh* _Mesh, fbxsdk::FbxNode* Node);
 
 public:
 };

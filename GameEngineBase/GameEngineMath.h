@@ -32,6 +32,38 @@ public:
 	static const float4 NONE;
 
 public:
+	static float InvSqrt(float f)
+	{
+		const __m128 fOneHalf = _mm_set_ss(0.5f);
+		__m128 Y0, X0, X1, X2, FOver2;
+		float temp;
+
+		Y0 = _mm_set_ss(f);
+		X0 = _mm_rsqrt_ss(Y0);	// 1/sqrt estimate (12 bits)
+		FOver2 = _mm_mul_ss(Y0, fOneHalf);
+
+		// 1st Newton-Raphson iteration
+		X1 = _mm_mul_ss(X0, X0);
+		X1 = _mm_sub_ss(fOneHalf, _mm_mul_ss(FOver2, X1));
+		X1 = _mm_add_ss(X0, _mm_mul_ss(X0, X1));
+
+		// 2nd Newton-Raphson iteration
+		X2 = _mm_mul_ss(X1, X1);
+		X2 = _mm_sub_ss(fOneHalf, _mm_mul_ss(FOver2, X2));
+		X2 = _mm_add_ss(X1, _mm_mul_ss(X1, X2));
+
+		_mm_store_ss(&temp, X2);
+		return temp;
+	}
+
+	bool IsNearlyZero() const
+	{
+		return fabsf(x) <= 1.e-4f && fabsf(y) <= 1.e-4f && fabsf(z) <= 1.e-4f;
+	}
+
+	static float4 MatrixToQuaternion(const class float4x4& M);
+
+public:
 	// 거리 : 두 벡터간의 거리
 	static float Distance(float4 _Left, float4 _Right)
 	{
@@ -136,6 +168,49 @@ public:
 
 		DirectX::XMVECTOR DirectVector;
 	};
+
+public:
+	float4() :
+		x(0.0f),
+		y(0.0f),
+		z(0.0f),
+		w(1.0f)
+	{
+	}
+
+	float4(float _x, float _y) :
+		x(_x),
+		y(_y),
+		z(0.0f),
+		w(1.0f)
+	{
+	}
+
+	float4(float _x, float _y, float _z, float _w = 1.0f) :
+		x(_x),
+		y(_y),
+		z(_z),
+		w(_w)
+	{
+	}
+
+	float4(DirectX::XMVECTOR _value) :
+		DirectVector(_value)
+	{
+	}
+
+	~float4()
+	{
+	}
+
+public:		// delete constructer
+	float4(const float4& _other) :
+		x(_other.x),
+		y(_other.y),
+		z(_other.z),
+		w(_other.w)
+	{
+	}
 
 	float4 operator+(const float4 _value) const
 	{
@@ -387,50 +462,6 @@ public:
 		*this = RotateZDegree(*this, _Deg);
 		return;
 	}
-
-public:
-	float4() :
-		x(0.0f),
-		y(0.0f),
-		z(0.0f),
-		w(1.0f)
-	{
-	}
-
-	float4(float _x, float _y) :
-		x(_x),
-		y(_y),
-		z(0.0f),
-		w(1.0f)
-	{
-	}
-
-	float4(float _x, float _y, float _z, float _w = 1.0f) :
-		x(_x),
-		y(_y),
-		z(_z),
-		w(_w)
-	{
-	}
-
-	float4(DirectX::XMVECTOR _value) :
-		DirectVector(_value)
-	{
-	}
-
-	~float4()
-	{
-	}
-
-public:		// delete constructer
-	float4(const float4& _other) :
-		x(_other.x), 
-		y(_other.y),
-		z(_other.z), 
-		w(_other.w)
-	{
-	}
-
 };
 
 class int4
@@ -532,9 +563,16 @@ public:
 class float4x4
 {
 public:
+	static float4x4 Transformation(float4 _Scale, float4 _RotQ, float4 _Pos)
+	{
+		return DirectX::XMMatrixTransformation(float4::ZERO.DirectVector, float4::ZERO.DirectVector, _Scale.DirectVector, float4::ZERO.DirectVector, _RotQ.DirectVector, _Pos.DirectVector);
+	}
+
+public:
 	union
 	{
 		float Arr2D[4][4];
+		float4 ArrVector[4];
 
 		struct
 		{
@@ -668,6 +706,13 @@ public: // 전치행렬 : 주대각선(LT->RB)를 기준으로 반사대칭한 행렬 생성
 		DirectMatrix = DirectX::XMMatrixTranspose(DirectMatrix);
 	}
 
+public: // 역행렬
+	float4x4 InverseReturn()
+	{
+		float4x4 ReturnMat = DirectX::XMMatrixInverse(nullptr, DirectMatrix);
+		return ReturnMat;
+	}
+
 public: // 뷰포트
 	void ViewPortCenter(float _ScreenX, float _ScreenY, float _StartX, float _StartY, float _MinZ, float _MaxZ)
 	{
@@ -710,5 +755,86 @@ public: // 투영행렬
 	void OrthographicLH(float _Width, float _Height, float _Near, float _Far)
 	{
 		DirectMatrix = DirectX::XMMatrixOrthographicLH(_Width, _Height, _Near, _Far);
+	}
+
+public: // 월드행렬에서 크기(Scale)만 추출
+	float4 ExtractScaling()
+	{
+		float4 ret = float4::ZERO;
+
+		float Tolerance = 1.e-8f;
+
+		const float SquareSum0 = (Arr2D[0][0] * Arr2D[0][0]) + (Arr2D[0][1] * Arr2D[0][1]) + (Arr2D[0][2] * Arr2D[0][2]);
+		const float SquareSum1 = (Arr2D[1][0] * Arr2D[1][0]) + (Arr2D[1][1] * Arr2D[1][1]) + (Arr2D[1][2] * Arr2D[1][2]);
+		const float SquareSum2 = (Arr2D[2][0] * Arr2D[2][0]) + (Arr2D[2][1] * Arr2D[2][1]) + (Arr2D[2][2] * Arr2D[2][2]);
+
+		if (SquareSum0 > Tolerance)
+		{
+			float Scale0 = sqrtf(SquareSum0);
+			ret.x = Scale0;
+			float InvScale0 = 1.f / Scale0;
+			Arr2D[0][0] *= InvScale0;
+			Arr2D[0][1] *= InvScale0;
+			Arr2D[0][2] *= InvScale0;
+		}
+		else
+		{
+			ret.x = 0;
+		}
+
+		if (SquareSum1 > Tolerance)
+		{
+			float Scale1 = sqrtf(SquareSum1);
+			ret.y = Scale1;
+			float InvScale1 = 1.f / Scale1;
+			Arr2D[1][0] *= InvScale1;
+			Arr2D[1][1] *= InvScale1;
+			Arr2D[1][2] *= InvScale1;
+		}
+		else
+		{
+			ret.y = 0;
+		}
+
+		if (SquareSum2 > Tolerance)
+		{
+			float Scale2 = sqrtf(SquareSum2);
+			ret.z = Scale2;
+			float InvScale2 = 1.f / Scale2;
+			Arr2D[2][0] *= InvScale2;
+			Arr2D[2][1] *= InvScale2;
+			Arr2D[2][2] *= InvScale2;
+		}
+		else
+		{
+			ret.z = 0;
+		}
+
+		return ret;
+	}
+
+public:
+	inline float Determinant() const
+	{
+		return	Arr2D[0][0] * (
+			Arr2D[1][1] * (Arr2D[2][2] * Arr2D[3][3] - Arr2D[2][3] * Arr2D[3][2]) -
+			Arr2D[2][1] * (Arr2D[1][2] * Arr2D[3][3] - Arr2D[1][3] * Arr2D[3][2]) +
+			Arr2D[3][1] * (Arr2D[1][2] * Arr2D[2][3] - Arr2D[1][3] * Arr2D[2][2])
+			) -
+			Arr2D[1][0] * (
+				Arr2D[0][1] * (Arr2D[2][2] * Arr2D[3][3] - Arr2D[2][3] * Arr2D[3][2]) -
+				Arr2D[2][1] * (Arr2D[0][2] * Arr2D[3][3] - Arr2D[0][3] * Arr2D[3][2]) +
+				Arr2D[3][1] * (Arr2D[0][2] * Arr2D[2][3] - Arr2D[0][3] * Arr2D[2][2])
+				) +
+			Arr2D[2][0] * (
+				Arr2D[0][1] * (Arr2D[1][2] * Arr2D[3][3] - Arr2D[1][3] * Arr2D[3][2]) -
+				Arr2D[1][1] * (Arr2D[0][2] * Arr2D[3][3] - Arr2D[0][3] * Arr2D[3][2]) +
+				Arr2D[3][1] * (Arr2D[0][2] * Arr2D[1][3] - Arr2D[0][3] * Arr2D[1][2])
+				) -
+			Arr2D[3][0] * (
+				Arr2D[0][1] * (Arr2D[1][2] * Arr2D[2][3] - Arr2D[1][3] * Arr2D[2][2]) -
+				Arr2D[1][1] * (Arr2D[0][2] * Arr2D[2][3] - Arr2D[0][3] * Arr2D[2][2]) +
+				Arr2D[2][1] * (Arr2D[0][2] * Arr2D[1][3] - Arr2D[0][3] * Arr2D[1][2])
+				);
 	}
 };

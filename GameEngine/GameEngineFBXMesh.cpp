@@ -1,7 +1,8 @@
 #include "PreCompile.h"
 #include "GameEngineFBXMesh.h"
 
-GameEngineFBXMesh::GameEngineFBXMesh() 
+GameEngineFBXMesh::GameEngineFBXMesh() :
+	ImportAnimationMerge(false)
 {
 }
 
@@ -69,6 +70,16 @@ float4 GameEngineFBXMesh::FbxQuaternionTofloat4(const fbxsdk::FbxQuaternion& _Ba
 	Vec.Arr1D[3] = -(float)_BaseQ.mData[3];
 
 	return Vec;
+}
+
+void GameEngineFBXMesh::MeshAnimationInfoCheck()
+{
+	if (true == ImportAnimationMerge)
+	{
+		return;
+	}
+
+	ImportAnimationMerge = true;
 }
 
 void GameEngineFBXMesh::Load(const std::string& _Path) 
@@ -558,5 +569,472 @@ void GameEngineFBXMesh::CreateIndexBuffer()
 				Data.second.GameEngineIndexBuffers[i].push_back(NewRes);
 			}
 		}
+	}
+}
+
+bool GameEngineFBXMesh::IsBone(fbxsdk::FbxNode* Link)
+{
+	fbxsdk::FbxNodeAttribute* Attr = Link->GetNodeAttribute();
+	if (Attr)
+	{
+		fbxsdk::FbxNodeAttribute::EType AttrType = Attr->GetAttributeType();
+		if (AttrType == fbxsdk::FbxNodeAttribute::eSkeleton ||
+			AttrType == fbxsdk::FbxNodeAttribute::eMesh ||
+			AttrType == fbxsdk::FbxNodeAttribute::eNull)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool GameEngineFBXMesh::IsNull(fbxsdk::FbxNode* Link)
+{
+	fbxsdk::FbxNodeAttribute* Attr = Link->GetNodeAttribute();
+	if (Attr)
+	{
+		fbxsdk::FbxNodeAttribute::EType AttrType = Attr->GetAttributeType();
+		if (AttrType == fbxsdk::FbxNodeAttribute::eNull)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+void GameEngineFBXMesh::RecursiveBuildSkeleton(fbxsdk::FbxNode* Link, std::vector<fbxsdk::FbxNode*>& OutSortedLinks)
+{
+	if (IsBone(Link))
+	{
+		if (false == IsNull(Link))
+		{
+			OutSortedLinks.push_back(Link);
+		}
+		int ChildIndex;
+		for (ChildIndex = 0; ChildIndex < Link->GetChildCount(); ChildIndex++)
+		{
+			RecursiveBuildSkeleton(Link->GetChild(ChildIndex), OutSortedLinks);
+		}
+	}
+}
+
+bool GameEngineFBXMesh::RetrievePoseFromBindPose(fbxsdk::FbxScene* pScene, const std::vector<fbxsdk::FbxNode*>& NodeArray, fbxsdk::FbxArray<fbxsdk::FbxPose*>& PoseArray)
+{
+	const int PoseCount = pScene->GetPoseCount();
+	for (int PoseIndex = 0; PoseIndex < PoseCount; PoseIndex++)
+	{
+		fbxsdk::FbxPose* CurrentPose = pScene->GetPose(PoseIndex);
+
+		if (CurrentPose && CurrentPose->IsBindPose())
+		{
+			std::string PoseName = CurrentPose->GetName();
+			fbxsdk::FbxStatus Status;
+
+			for (auto Current : NodeArray)
+			{
+				std::string CurrentName = Current->GetName();
+				fbxsdk::NodeList pMissingAncestors, pMissingDeformers, pMissingDeformersAncestors, pWrongMatrices;
+
+				if (CurrentPose->IsValidBindPoseVerbose(Current, pMissingAncestors, pMissingDeformers, pMissingDeformersAncestors, pWrongMatrices, 0.0001, &Status))
+				{
+					PoseArray.Add(CurrentPose);
+					break;
+				}
+				else
+				{
+					for (int i = 0; i < pMissingAncestors.GetCount(); i++)
+					{
+						fbxsdk::FbxAMatrix mat = pMissingAncestors.GetAt(i)->EvaluateGlobalTransform(FBXSDK_TIME_ZERO);
+						CurrentPose->Add(pMissingAncestors.GetAt(i), mat);
+					}
+
+					pMissingAncestors.Clear();
+					pMissingDeformers.Clear();
+					pMissingDeformersAncestors.Clear();
+					pWrongMatrices.Clear();
+
+					if (CurrentPose->IsValidBindPose(Current))
+					{
+						PoseArray.Add(CurrentPose);
+						break;
+					}
+					else
+					{
+						fbxsdk::FbxNode* ParentNode = Current->GetParent();
+						while (ParentNode)
+						{
+							fbxsdk::FbxNodeAttribute* Attr = ParentNode->GetNodeAttribute();
+							if (Attr && Attr->GetAttributeType() == fbxsdk::FbxNodeAttribute::eNull)
+							{
+								break;
+							}
+
+							ParentNode = ParentNode->GetParent();
+						}
+
+						if (ParentNode && CurrentPose->IsValidBindPose(ParentNode))
+						{
+							PoseArray.Add(CurrentPose);
+							break;
+						}
+						else
+						{
+							std::string ErrorString = Status.GetErrorString();
+							std::string CurrentName = Current->GetName();
+
+							GameEngineDebug::MsgBoxError(ErrorString + "_" + CurrentName);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return (PoseArray.Size() > 0);
+}
+
+void GameEngineFBXMesh::BuildSkeletonSystem(fbxsdk::FbxScene* pScene, std::vector<fbxsdk::FbxCluster*>& ClusterArray, std::vector<fbxsdk::FbxNode*>& OutSortedLinks)
+{
+	fbxsdk::FbxNode* Link;
+	std::vector<fbxsdk::FbxNode*> RootLinks;
+	size_t ClusterIndex;
+	for (ClusterIndex = 0; ClusterIndex < ClusterArray.size(); ClusterIndex++)
+	{
+		Link = ClusterArray[ClusterIndex]->GetLink();
+		if (Link)
+		{
+			Link = GetRootSkeleton(pScene, Link);
+			size_t LinkIndex;
+			for (LinkIndex = 0; LinkIndex < RootLinks.size(); LinkIndex++)
+			{
+				if (Link == RootLinks[static_cast<int>(LinkIndex)])
+				{
+					break;
+				}
+			}
+
+			if (LinkIndex == RootLinks.size())
+			{
+				RootLinks.push_back(Link);
+			}
+		}
+	}
+
+	for (size_t LinkIndex = 0; LinkIndex < RootLinks.size(); LinkIndex++)
+	{
+		RecursiveBuildSkeleton(RootLinks[LinkIndex], OutSortedLinks);
+	}
+}
+
+fbxsdk::FbxNode* GameEngineFBXMesh::GetRootSkeleton(fbxsdk::FbxScene* pScene, fbxsdk::FbxNode* Link)
+{
+	fbxsdk::FbxNode* RootBone = Link;
+
+	while (RootBone && RootBone->GetParent())
+	{
+		bool bIsBlenderArmatureBone = false;
+
+		fbxsdk::FbxNodeAttribute* Attr = RootBone->GetParent()->GetNodeAttribute();
+		if (Attr &&
+			(Attr->GetAttributeType() == fbxsdk::FbxNodeAttribute::eMesh ||
+				(Attr->GetAttributeType() == fbxsdk::FbxNodeAttribute::eNull && !bIsBlenderArmatureBone) ||
+				Attr->GetAttributeType() == fbxsdk::FbxNodeAttribute::eSkeleton) &&
+			RootBone->GetParent() != pScene->GetRootNode())
+		{
+			if (Attr->GetAttributeType() == fbxsdk::FbxNodeAttribute::eMesh)
+			{
+				fbxsdk::FbxMesh* Mesh = (fbxsdk::FbxMesh*)Attr;
+				if (Mesh->GetDeformerCount(fbxsdk::FbxDeformer::eSkin) > 0)
+				{
+					break;
+				}
+			}
+
+			RootBone = RootBone->GetParent();
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	return RootBone;
+}
+
+void GameEngineFBXMesh::ImportBone()
+{
+	size_t meshCount = MeshInfos.size();
+	if (0 == meshCount)
+	{
+		return;
+	}
+
+	// 스키닝 정보를 가지고있는 것
+	std::vector<fbxsdk::FbxNode*> NodeArray;
+	std::vector<fbxsdk::FbxNode*> SortedLinks;
+
+	// 모든 스키닝 관련 정보를 모으는것(클러스터)
+	std::vector<fbxsdk::FbxCluster*> ClusterArray;
+	fbxsdk::FbxNode* Link = nullptr;
+	int SkelType = 0;
+	fbxsdk::FbxNode* SkeletalMeshNode = nullptr;
+
+	for (size_t n = 0; n < meshCount; ++n)
+	{
+		FbxExMeshInfo& meshInfo = MeshInfos.at(n);
+
+		// Lod가 적용되어 있으면 
+		if (0 != meshInfo.VertexOrder)
+		{
+			continue;
+		}
+
+		fbxsdk::FbxNode* pNode = meshInfo.Mesh->GetNode();
+		fbxsdk::FbxMesh* FbxMesh = meshInfo.Mesh;
+
+		NodeArray.push_back(pNode);
+		const int SkinDeformerCount = FbxMesh->GetDeformerCount(fbxsdk::FbxDeformer::eSkin);
+		for (int DeformerIndex = 0; DeformerIndex < SkinDeformerCount; DeformerIndex++)
+		{
+			fbxsdk::FbxSkin* Skin = (fbxsdk::FbxSkin*)FbxMesh->GetDeformer(DeformerIndex, fbxsdk::FbxDeformer::eSkin);
+			for (int ClusterIndex = 0; ClusterIndex < Skin->GetClusterCount(); ClusterIndex++)
+			{
+				ClusterArray.push_back(Skin->GetCluster(ClusterIndex));
+			}
+		}
+	}
+
+	if (0 == ClusterArray.size())
+	{
+		return;
+	}
+
+	SkeletalMeshNode = NodeArray[0];
+
+	fbxsdk::PoseList PoseArray;
+
+	if (RetrievePoseFromBindPose(Scene, NodeArray, PoseArray) == false)
+	{
+		const int PoseCount = Scene->GetPoseCount();
+		for (int PoseIndex = PoseCount - 1; PoseIndex >= 0; --PoseIndex)
+		{
+			fbxsdk::FbxPose* CurrentPose = Scene->GetPose(PoseIndex);
+
+			if (CurrentPose && CurrentPose->IsBindPose())
+			{
+				Scene->RemovePose(PoseIndex);
+				CurrentPose->Destroy();
+			}
+		}
+
+		Manager->CreateMissingBindPoses(Scene);
+		if (RetrievePoseFromBindPose(Scene, NodeArray, PoseArray) == false)
+		{
+			GameEngineDebug::MsgBoxError("Recreating bind pose failed.");
+		}
+		else
+		{
+		}
+	}
+
+	BuildSkeletonSystem(Scene, ClusterArray, SortedLinks);
+
+	if (SortedLinks.size() == 0)
+	{
+		GameEngineDebug::MsgBoxError("연결된 링크가 없다.");
+	}
+
+	std::map<fbxsdk::FbxString, int> m_NameBoneCheck;
+	size_t LinkIndex;
+
+	for (LinkIndex = 0; LinkIndex < SortedLinks.size(); ++LinkIndex)
+	{
+		Link = SortedLinks[LinkIndex];
+		m_NameBoneCheck.insert(std::make_pair(Link->GetName(), 0));
+
+		for (size_t AltLinkIndex = LinkIndex + 1; AltLinkIndex < SortedLinks.size(); ++AltLinkIndex)
+		{
+			fbxsdk::FbxNode* AltLink = SortedLinks[AltLinkIndex];
+
+			fbxsdk::FbxString tempLinkName = Link->GetName();
+			fbxsdk::FbxString tempAltLinkName = AltLink->GetName();
+
+			std::map<fbxsdk::FbxString, int>::iterator FindBoneNameIter = m_NameBoneCheck.find(tempAltLinkName);
+
+			// 같은 이름의 본이 있어서
+			// 기존 본의 겹치는 이름을 변경해준다.
+			if (FindBoneNameIter != m_NameBoneCheck.end())
+			{
+				fbxsdk::FbxString newName = FindBoneNameIter->first;
+				newName += "_";
+				newName += (++FindBoneNameIter->second);
+
+				// 만약에 바꿨는데도 또 있어
+				std::map<fbxsdk::FbxString, int>::iterator RevertIter = m_NameBoneCheck.find(newName);
+
+				while (RevertIter != m_NameBoneCheck.find(newName))
+				{
+					newName = FindBoneNameIter->first;
+					newName += "_";
+					newName += (++FindBoneNameIter->second);
+					RevertIter = m_NameBoneCheck.find(newName);
+				}
+
+				// 겹치는 이름의 링크는 이 새이름을 바꾸면
+				// 앞으로 펼쳐질 본과 관련된 모든곳에서
+				// 이 이름으로 계산될것이므로 걱정할 필요가 없어진다.
+				AltLink->SetName(newName.Buffer());
+
+				// GameEngineDebug::OutPutMsg(tempLinkName + L"  " + tempAltLinkName);
+				// GameEngineDebug::AssertMsg(L"같은 링크");
+			}
+		}
+	}
+
+	fbxsdk::FbxArray<fbxsdk::FbxAMatrix> GlobalsPerLink;
+	GlobalsPerLink.Grow(static_cast<int>(SortedLinks.size()));
+	GlobalsPerLink[0] = ConvertMatrix;
+
+	bool GlobalLinkFoundFlag;
+	fbxsdk::FbxVector4 LocalLinkT;
+	fbxsdk::FbxQuaternion LocalLinkQ;
+	fbxsdk::FbxVector4	LocalLinkS;
+	fbxsdk::FbxVector4 GlobalLinkT;
+	fbxsdk::FbxQuaternion GlobalLinkQ;
+	fbxsdk::FbxVector4	GlobalLinkS;
+
+	bool bAnyLinksNotInBindPose = false;
+	std::string LinksWithoutBindPoses;
+	int NumberOfRoot = 0;
+
+	int RootIdx = -1;
+
+	for (LinkIndex = 0; LinkIndex < SortedLinks.size(); LinkIndex++)
+	{
+		Bone& tempBoneData = m_vecRefBones.emplace_back();
+		tempBoneData.Index = static_cast<int>(m_vecRefBones.size() - 1);
+
+		Link = SortedLinks[LinkIndex];
+
+		int ParentIndex = -1;
+		fbxsdk::FbxNode* LinkParent = Link->GetParent();
+		if (LinkIndex)
+		{
+			for (int ll = 0; ll < LinkIndex; ++ll)
+			{
+				fbxsdk::FbxNode* Otherlink = SortedLinks[ll];
+				if (Otherlink == LinkParent)
+				{
+					ParentIndex = ll;
+					break;
+				}
+			}
+		}
+
+		if (ParentIndex == -1)
+		{
+			++NumberOfRoot;
+			RootIdx = static_cast<int>(LinkIndex);
+		}
+
+		GlobalLinkFoundFlag = false;
+		if (!SkelType)
+		{
+			if (PoseArray.GetCount())
+			{
+				for (int PoseIndex = 0; PoseIndex < PoseArray.GetCount(); PoseIndex++)
+				{
+					int PoseLinkIndex = PoseArray[PoseIndex]->Find(Link);
+					if (PoseLinkIndex >= 0)
+					{
+						fbxsdk::FbxMatrix NoneAffineMatrix = PoseArray[PoseIndex]->GetMatrix(PoseLinkIndex);
+						fbxsdk::FbxAMatrix Matrix = *(fbxsdk::FbxAMatrix*)(double*)&NoneAffineMatrix;
+						GlobalsPerLink[static_cast<int>(LinkIndex)] = Matrix;
+						GlobalLinkFoundFlag = true;
+						break;
+					}
+				}
+			}
+
+			if (!GlobalLinkFoundFlag)
+			{
+				for (int ClusterIndex = 0; ClusterIndex < ClusterArray.size(); ClusterIndex++)
+				{
+					fbxsdk::FbxCluster* Cluster = ClusterArray[ClusterIndex];
+					if (Link == Cluster->GetLink())
+					{
+						Cluster->GetTransformLinkMatrix(GlobalsPerLink[static_cast<int>(LinkIndex)]);
+						GlobalLinkFoundFlag = true;
+						break;
+					}
+				}
+			}
+		}
+
+		if (!GlobalLinkFoundFlag)
+		{
+			GlobalsPerLink[static_cast<int>(LinkIndex)] = Link->EvaluateGlobalTransform();
+		}
+
+		GlobalsPerLink[static_cast<int>(LinkIndex)] = GlobalsPerLink[static_cast<int>(LinkIndex)];
+		if (LinkIndex &&
+			-1 != ParentIndex)
+		{
+			fbxsdk::FbxAMatrix	Matrix;
+			Matrix = GlobalsPerLink[static_cast<int>(ParentIndex)].Inverse() * GlobalsPerLink[static_cast<int>(LinkIndex)];
+			LocalLinkT = Matrix.GetT();
+			LocalLinkQ = Matrix.GetQ();
+			LocalLinkS = Matrix.GetS();
+			GlobalLinkT = GlobalsPerLink[static_cast<int>(LinkIndex)].GetT();
+			GlobalLinkQ = GlobalsPerLink[static_cast<int>(LinkIndex)].GetQ();
+			GlobalLinkS = GlobalsPerLink[static_cast<int>(LinkIndex)].GetS();
+		}
+		else
+		{
+			GlobalLinkT = LocalLinkT = GlobalsPerLink[static_cast<int>(LinkIndex)].GetT();
+			GlobalLinkQ = LocalLinkQ = GlobalsPerLink[static_cast<int>(LinkIndex)].GetQ();
+			GlobalLinkS = LocalLinkS = GlobalsPerLink[static_cast<int>(LinkIndex)].GetS();
+		}
+
+		Bone& Bone = m_vecRefBones[static_cast<int>(LinkIndex)];
+
+		Bone.Name = Link->GetName();
+
+		JointPos& JointMatrix = Bone.BonePos;
+		fbxsdk::FbxSkeleton* Skeleton = Link->GetSkeleton();
+		if (Skeleton)
+		{
+			JointMatrix.Length = (float)Skeleton->LimbLength.Get();
+			JointMatrix.XSize = (float)Skeleton->Size.Get();
+			JointMatrix.YSize = (float)Skeleton->Size.Get();
+			JointMatrix.ZSize = (float)Skeleton->Size.Get();
+		}
+		else
+		{
+			JointMatrix.Length = 1.;
+			JointMatrix.XSize = 100.;
+			JointMatrix.YSize = 100.;
+			JointMatrix.ZSize = 100.;
+		}
+
+		Bone.ParentIndex = ParentIndex;
+		Bone.NumChildren = 0;
+		for (int ChildIndex = 0; ChildIndex < Link->GetChildCount(); ChildIndex++)
+		{
+			fbxsdk::FbxNode* Child = Link->GetChild(ChildIndex);
+			if (IsBone(Child))
+			{
+				Bone.NumChildren++;
+			}
+		}
+
+		JointMatrix.SetTranslation(LocalLinkT);
+		JointMatrix.SetRotation(LocalLinkQ);
+		JointMatrix.SetScale(LocalLinkS);
+		JointMatrix.SetGlobalTranslation(GlobalLinkT);
+		JointMatrix.SetGlobalRotation(GlobalLinkQ);
+		JointMatrix.SetGlobalScale(GlobalLinkS);
+		JointMatrix.BuildMatrix();
 	}
 }

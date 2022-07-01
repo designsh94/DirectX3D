@@ -30,12 +30,12 @@ void GameEngineFBX::Reset()
 		Scene->Destroy();
 		Scene = nullptr;
 	}
-	if (nullptr != Manager)
+	if (nullptr != Importer)
 	{
 		Importer->Destroy();
 		Importer = nullptr;
 	}
-	if (nullptr != Manager)
+	if (nullptr != IOSetting)
 	{
 		IOSetting->Destroy();
 		IOSetting = nullptr;
