@@ -5,8 +5,39 @@
 #include <GameEngineBase/GameEngineDirectory.h>
 #include <GameEngineBase/GameEngineFile.h>
 
+enum class LoadInfoState
+{
+	NONE = -1,
+	FILE,
+	MESH,
+	ANIMATION,
+	ALL
+};
+
 class GameEngineFBXWindow : public GameEngineGUIWindow
 {
+private: // Font 관련
+	ImFont* TextFontStyle_Eng;							// (알파벳용) : 24pt, arialbd.ttf(Arial 굵게)
+	ImFont* LabelFontStyle_Eng;							// (알파벳용) : 18pt, arialbd.ttf(Arial 굵게)
+	ImFont* ButtonFontStyle_Eng;						// (알파벳용) : 10pt, arialbd.ttf(Arial 굵게)
+
+	ImFont* TextFontStyle_Kor;							// (한글용) : 24pt, malgunbd.ttf(맑은고딕 굵게)
+	ImFont* LabelFontStyle_Kor;							// (한글용) : 18pt, malgunbd.ttf(맑은고딕 굵게)
+	ImFont* ButtonFontStyle_Kor;						// (한글용) : 10pt, malgunbd.ttf(맑은고딕 굵게)
+
+	ImGuiStyle* FontColor;								// Styel의 Color 0번째 인덱스를 이용하여 텍스트색상을 변경
+
+private: // Vector List
+	std::vector<std::string> FileNames_Origin;			// 탐색용 파일명 목록(원본)
+	std::vector<std::string> FileNames;					// 편집용 파일명 목록
+
+private: // Load Flag
+	std::map<std::string, LoadInfoState> LoadInfoCheck;	// 해당 파일이 로드된 정보를 체크
+
+private: // ListBox Select Index
+	int FBXFileSelect;									// 현재목록의 선택된 파일 인덱스
+	int ActorSelect;									// 현재목록의 선택된 액터 인덱스
+
 public:
 	struct RenderTargetDrawData
 	{
@@ -18,16 +49,10 @@ public:
 	};
 
 public:
-	GameEngineDirectory FBXFolder;
-
-public:
-	int FBXFileSelect;
-	int ActorSelect;
+	GameEngineDirectory FBXFilePath;
 
 public:
 	std::vector<std::string> ActorsNames;
-	std::vector<std::string> OriNames;
-	std::vector<std::string> Names;
 	std::vector<GameEngineActor*> Actors;
 
 public:
@@ -42,6 +67,13 @@ public:
 
 protected:
 	void OnGUI() override;
+
+private:
+	void FrameUpdateClear();
+
+private:
+	LoadInfoState GetCurFileLoadFlag(const std::string& _FileName);
+	void SetCurFileLoadFlag(const std::string& _FileName, LoadInfoState _Index);
 
 private:
 	void ActorControl();

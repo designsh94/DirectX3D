@@ -52,17 +52,17 @@ void FBXLevel::CreateActorLevel()
 
 void FBXLevel::LevelStart()
 {
-	// Create FBX Window And FBX Files Path Set
+	// Create FBX Window & FBX Files Path Set
 	GameEngineFBXWindow* ImageWindow = GameEngineGUI::GetInst()->CreateGUIWindow<GameEngineFBXWindow>("FBXWindow");
-	ImageWindow->FBXFolder.MoveParent("DirectX3D");
-	ImageWindow->FBXFolder.MoveChild("EngineResources");
-	ImageWindow->FBXFolder.MoveChild("FBX");
+	ImageWindow->FBXFilePath.MoveParent("DirectX3D");
+	ImageWindow->FBXFilePath.MoveChild("EngineResources");
+	ImageWindow->FBXFilePath.MoveChild("FBX");
 
-	// MainCam Mode And Position Set
+	// MainCam Mode & Position Set
 	GetMainCamera()->SetProjectionMode(ProjectionMode::Perspective);
 	GetMainCameraActor()->GetTransform()->SetLocalPosition(float4(0.0f, 0.0f, -300.0f));
 
-	// FreeCam Key Set
+	// Create FreeCamera Key
 	if (false == GameEngineInput::GetInst().IsKey("FreeCameraOn"))
 	{
 		GameEngineInput::GetInst().CreateKey("FreeCameraOn", 'O');
