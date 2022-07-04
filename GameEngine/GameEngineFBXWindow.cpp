@@ -12,7 +12,8 @@ GameEngineFBXWindow::GameEngineFBXWindow() :
 	LabelFontStyle_Eng(nullptr),
 	ButtonFontStyle_Eng(nullptr),
 	FBXFileSelect(-1),
-	ActorSelect(-1)
+	ActorSelect(-1),
+	SelectMesh(nullptr)
 {
 	// 생성시 해당 윈도우에서 사용하려는 Font를 재정의한다.
 	ImGuiIO& IO = ImGui::GetIO();
@@ -20,7 +21,7 @@ GameEngineFBXWindow::GameEngineFBXWindow() :
 	// C++ 단일문자 '\'을 지원하지않는다 그러므로 '\\' 로 상/하위 디렉터리를 구분하여야만 AddFontFromFileTTF로 해당 파일을 로드할수있다.
 	// English
 	TextFontStyle_Eng = IO.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\arialbd.ttf", 20.f);
-	ButtonFontStyle_Eng = IO.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\arialbd.ttf", 18.f);
+	ButtonFontStyle_Eng = IO.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\arialbd.ttf", 12.f);
 	LabelFontStyle_Eng = IO.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\arialbd.ttf", 16.f);
 
 	// Korean
@@ -47,10 +48,10 @@ void GameEngineFBXWindow::OnGUI()
 	ImGui::PushFont(LabelFontStyle_Eng);
 
 	// Font Color로 특정 목록의 타입을 구별한다.
-	ImGui::Text("Distinction : ");
+	ImGui::Text("FBXFile Infomation State : ");
 
-	// All Load End(메쉬와 애니메이션을 모두 로드한 파일) - MAGENTA
-	ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Text, ImVec4(1.0f, 0.0f, 1.0f, 1.0f));
+	// All Load End(메쉬와 애니메이션을 모두 로드한 파일 : 액터생성가능) - GREEN
+	ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
 	ImGui::Text("ALL");
 	ImGui::PopStyleColor();
 
@@ -63,7 +64,7 @@ void GameEngineFBXWindow::OnGUI()
 
 	ImGui::SameLine();
 
-	// Mesh Load End FBX File(메쉬를 로드한 파일) - RED
+	// Mesh Load End FBX File(메쉬를 로드한 파일 : 액터생성가능) - RED
 	ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
 	ImGui::Text("MESH");
 	ImGui::PopStyleColor();
@@ -86,7 +87,7 @@ void GameEngineFBXWindow::OnGUI()
 #pragma region FBX File ListBox
 	// 사용자폰트 사용
 	ImGui::PushFont(TextFontStyle_Eng);
-	ImGui::Text("FBX File List");
+	ImGui::Text("FBXFILE LIST");
 	ImGui::PopFont();
 	
 	// 지정된경로의 FBX File List Get
@@ -111,70 +112,88 @@ void GameEngineFBXWindow::OnGUI()
 		// 원본파일명 목록에 저장
 		FileNames_Origin.push_back(Name);
 
-		// 현재 파일의 로드정보 상태를 저장
-		LoadInfoCheck.insert(std::make_pair(Name, LoadInfoState::FILE));
-
-		// ListBox 추가
+		// FBXFileName_Arr List 추가
 		FBXFileName_Arr.push_back(FileNames[FileNames.size() - 1].c_str());
 	}
 
-	// File FBX ListBox 생성(ComboBox)
+	// Create File FBX Select ComboBox
+	if (true == ImGui::Combo("##FBXFILELIST", &FBXFileSelect, &FBXFileName_Arr[0], static_cast<int>(FBXFileName_Arr.size())))
+	{
+		// 선택한 FBX 파일이 존재할때
+		if (-1 != FBXFileSelect)
+		{
+			// 현재 선택된 FBX File의 Mesh Setting
+			SelectMesh = GameEngineFBXMeshManager::GetInst().Find(FileNames_Origin[FBXFileSelect]);
+		}
+	}
+	
+#pragma endregion
+
+	// 해당 FBX File의 모든정보 로드완료시 
+	// MeshLoad, AnimationLoad Button Disabled & 
+	ImGui::PushFont(ButtonFontStyle_Eng);
+
+	// MeshLoad Button
+	if (nullptr == SelectMesh)
+	{
+		if (true == ImGui::Button("MESH LOAD", ImVec2(100.f, 30.f)))
+		{
+			// Mesh Load
+			GameEngineFBXMesh* Mesh = GameEngineFBXMeshManager::GetInst().Load(Files[FBXFileSelect].GetFullPath());
+			Mesh->MeshLoad();
+			if (0 != Mesh->GetMeshSet().size())
+			{
+				Mesh->CreateRenderingBuffer();
+			}
+			else
+			{
+				GameEngineDebug::MsgBox("매쉬정보가 존재하지 않는 FBX입니다");
+				GameEngineFBXMeshManager::GetInst().DeletePath(Files[FBXFileSelect].GetFullPath());
+			}
+		}
+	}
+
+	ImGui::SameLine();
+
+	// Create Actor Button
+	// 단, Mesh정보가 로드되었다면 활성화
+	if (nullptr != SelectMesh && 0 != SelectMesh->GetMeshSet().size() && true == ImGui::Button("Create Actor"))
+	{
+		int a = 0;
+	}
+	ImGui::PopFont();
+
+#pragma region InfoLoadEnd List(정보로드완료된 목록)
 
 
 
-	//ImGui::PushItemWidth(200.f);
-	//ImGui::ListBox("##FBXFILELIST", &FBXFileSelect, &FBXFileName_Arr[0], static_cast<ImGuiID>(FBXFileName_Arr.size()), 20);
-	//ImGui::PopItemWidth();
-
-
-
-
-
-
-	//// ListBox의 모든아이템을 검사하면서 로드정보상태에 따라 텍스트컬러를 변경한다.
-	//for (int i = 0; i < static_cast<int>(FileNames_Origin.size()); ++i)
-	//{
-	//	std::string FileName = FileNames_Origin[i];
-
-	//	// 상태체크
-	//	LoadInfoState CurState = GetCurFileLoadFlag(FileName);
-	//	if (LoadInfoState::NONE != CurState)
-	//	{
-	//		// 상태에 따른 Item 글자색변경
-	//		const char* CurItem = nullptr;
-	//		CurItem = FileName.c_str();
-
-	//		switch (CurState)
-	//		{
-	//			case LoadInfoState::FILE:
-	//			{
-	//				ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), CurItem);
-	//				break;
-	//			}
-	//			case LoadInfoState::MESH:
-	//			{
-	//				ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), CurItem);
-	//				break;
-	//			}
-	//			case LoadInfoState::ANIMATION:
-	//			{
-	//				ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), CurItem);
-	//				break;
-	//			}
-	//			case LoadInfoState::ALL:
-	//			{
-	//				ImGui::TextColored(ImVec4(1.0f, 0.0f, 1.0f, 1.0f), CurItem);
-	//				break;
-	//			}
-	//		}
-	//	}
-	//}
-
-	int a = 0;
 
 #pragma endregion
 
 
+	//// Animation Load Button
+	//if (true == ImGui::Button("ANIM LOAD", ImVec2(100.f, 30.f)))
+	//{
+	//	// FBX File 로드상태 갱신
+	//	SetCurFileLoadFlag(FileNames_Origin[FBXFileSelect], LoadInfoState::ANIMATION);
+
+
+	//	// 
+
+
+	//}
+
+
+
+#pragma region ActorList(생성된 액터목록)
+
+	// 생성된 액터목록
+
+
+
+
+
+#pragma endregion
 
 	//Names.clear();
 	//OriNames.clear();
@@ -561,40 +580,19 @@ void GameEngineFBXWindow::FrameUpdateClear()
 	// List 관련 목록 클리어
 	FileNames.clear();
 	FileNames_Origin.clear();
-	LoadInfoCheck.clear();
+
+	// Select Current Mesh Clear
+	if (-1 == FBXFileSelect)
+	{
+		SelectMesh = nullptr;
+	}
 
 	// 
 
-
 }
 
-LoadInfoState GameEngineFBXWindow::GetCurFileLoadFlag(const std::string& _FileName)
+void GameEngineFBXWindow::CreateActorControl()
 {
-	// 해당 파일의 로드된 정보를 체크
-	std::map<std::string, LoadInfoState>::iterator FindIter = LoadInfoCheck.find(_FileName);
-	if (LoadInfoCheck.end() == FindIter)
-	{
-		GameEngineDebug::MsgBoxError("해당 파일정보가 존재하지않습니다");
-		return LoadInfoState::NONE;
-	}
-
-	// 현재 로드정보가 어디까지 완료되었는지 반환
-	LoadInfoState LoadIndex = (*FindIter).second;
-	return LoadIndex;
-}
-
-void GameEngineFBXWindow::SetCurFileLoadFlag(const std::string& _FileName, LoadInfoState _Index)
-{
-	// 해당 파일을 Get
-	std::map<std::string, LoadInfoState>::iterator FindIter = LoadInfoCheck.find(_FileName);
-	if (LoadInfoCheck.end() == FindIter)
-	{
-		GameEngineDebug::MsgBoxError("해당 파일정보가 존재하지않습니다");
-		return;
-	}
-
-	// 해당 파일의 정보로드 상태를 변경한다.
-	(*FindIter).second = _Index;
 }
 
 void GameEngineFBXWindow::ActorControl()
