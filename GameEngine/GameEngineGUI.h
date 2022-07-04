@@ -53,8 +53,11 @@ public:
 		WindowType* NewWindow = new WindowType();
 
 		NewWindow->SetName(_Name);
-
 		Windows_.push_back(NewWindow);
+
+		// 타입변환(업캐스팅) -> 해당 윈도우 Start Function Callback
+		GameEngineGUIWindow* ParentTypeWindow = NewWindow;
+		ParentTypeWindow->Start();
 
 		return NewWindow;
 	}

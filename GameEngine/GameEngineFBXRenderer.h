@@ -10,6 +10,19 @@ public:
 	GameEngineRenderingPipeLine* PipeLine_;
 };
 
+// 설명 : 
+class GameEngineFBXMesh;
+class GameEngineFBXAnimation;
+class FBXAnimation
+{
+public:
+	GameEngineFBXMesh* Mesh;
+	GameEngineFBXAnimation* Animation;
+
+public:
+	void Init();
+};
+
 // 설명 : 하나의 랜더 단위를 표현
 class CameraComponent;
 class GameEngineLevel;
@@ -23,7 +36,11 @@ private:
 	friend CameraComponent;
 
 private:
+	GameEngineFBXMesh* FBXMesh;
 	std::vector<RenderSet> RenderSets;
+
+private: // 애니메이션관련
+	std::map<std::string, FBXAnimation*> Animations;
 
 public:
 	GameEngineFBXRenderer();
@@ -57,6 +74,10 @@ public:
 protected:
 	void Start() override;
 	void Render(float _DeltaTime) override;
+
+public: // Animation Function
+	void CreateFBXAnimation(const std::string& _AnimationName, const std::string& _AnimationFBXName);
+	void ChangeFBXAnimation(const std::string& _AnimationName);
 
 public:
 };

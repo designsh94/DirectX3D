@@ -2,7 +2,7 @@
 #include "GameEngineFBXMesh.h"
 
 GameEngineFBXMesh::GameEngineFBXMesh() :
-	ImportAnimationMerge(false)
+	IsAnimationLoadOnce(false)
 {
 }
 
@@ -70,16 +70,6 @@ float4 GameEngineFBXMesh::FbxQuaternionTofloat4(const fbxsdk::FbxQuaternion& _Ba
 	Vec.Arr1D[3] = -(float)_BaseQ.mData[3];
 
 	return Vec;
-}
-
-void GameEngineFBXMesh::MeshAnimationInfoCheck()
-{
-	if (true == ImportAnimationMerge)
-	{
-		return;
-	}
-
-	ImportAnimationMerge = true;
 }
 
 void GameEngineFBXMesh::Load(const std::string& _Path) 
@@ -764,6 +754,12 @@ fbxsdk::FbxNode* GameEngineFBXMesh::GetRootSkeleton(fbxsdk::FbxScene* pScene, fb
 
 void GameEngineFBXMesh::ImportBone()
 {
+	// 이미 Bone정보를 로드하여 가지고있다면 중복 처리하지않는다.
+	if (0 != AllBones.size())
+	{
+		return;
+	}
+
 	size_t meshCount = MeshInfos.size();
 	if (0 == meshCount)
 	{
@@ -912,8 +908,8 @@ void GameEngineFBXMesh::ImportBone()
 
 	for (LinkIndex = 0; LinkIndex < SortedLinks.size(); LinkIndex++)
 	{
-		Bone& tempBoneData = m_vecRefBones.emplace_back();
-		tempBoneData.Index = static_cast<int>(m_vecRefBones.size() - 1);
+		Bone& tempBoneData = AllBones.emplace_back();
+		tempBoneData.Index = static_cast<int>(AllBones.size() - 1);
 
 		Link = SortedLinks[LinkIndex];
 
@@ -997,7 +993,7 @@ void GameEngineFBXMesh::ImportBone()
 			GlobalLinkS = LocalLinkS = GlobalsPerLink[static_cast<int>(LinkIndex)].GetS();
 		}
 
-		Bone& Bone = m_vecRefBones[static_cast<int>(LinkIndex)];
+		Bone& Bone = AllBones[static_cast<int>(LinkIndex)];
 
 		Bone.Name = Link->GetName();
 

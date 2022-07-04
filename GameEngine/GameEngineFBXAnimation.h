@@ -110,12 +110,18 @@ private:
 	bool CheckAnimation();
 
 public:
+	inline size_t GetAnimationCount()
+	{
+		return AnimationDatas.size();
+	}
+
+public:
 	bool LoadAnimation();
 	void Load(const std::string& _Path);
 
 public:
-	bool CreateAnimationInfo(const std::string& _MeshName);
 	bool AnimationLoad(GameEngineFBXMesh* _Mesh, fbxsdk::FbxNode* Node);
+	void CalFbxExBoneFrameTransMatrix(GameEngineFBXMesh* _Mesh);
 
 public:
 };

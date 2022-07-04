@@ -397,12 +397,17 @@ struct FbxExMeshInfo
 // 분류 : 
 // 용도 : 
 // 설명 : 
+class FBXAnimation;
+class GameEngineFBXAnimation;
 class GameEngineFBXMesh : public GameEngineFBX
 {
+	friend FBXAnimation;
+	friend GameEngineFBXAnimation;
+
 private:
-	bool ImportAnimationMerge;
+	bool IsAnimationLoadOnce;
 	std::vector<FbxExMeshInfo> MeshInfos;
-	std::vector<Bone> m_vecRefBones;
+	std::vector<Bone> AllBones;
 	std::map<int, FbxMeshSet> AllMeshMap;
 
 public:
@@ -422,9 +427,6 @@ public:
 	{
 		return AllMeshMap;
 	}
-
-public:
-	void MeshAnimationInfoCheck();
 
 public:
 	void Load(const std::string& _Path);

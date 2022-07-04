@@ -26,6 +26,7 @@
 
 // 
 #include <mutex>
+#include <typeinfo>
 
 // Debug
 #include <assert.h>

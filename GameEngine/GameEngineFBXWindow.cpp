@@ -118,10 +118,13 @@ void GameEngineFBXWindow::OnGUI()
 		FBXFileName_Arr.push_back(FileNames[FileNames.size() - 1].c_str());
 	}
 
-	// File FBX ListBox 持失
-	ImGui::PushItemWidth(200.f);
-	ImGui::ListBox("##FBXFILELIST", &FBXFileSelect, &FBXFileName_Arr[0], static_cast<ImGuiID>(FBXFileName_Arr.size()), 20);
-	ImGui::PopItemWidth();
+	// File FBX ListBox 持失(ComboBox)
+
+
+
+	//ImGui::PushItemWidth(200.f);
+	//ImGui::ListBox("##FBXFILELIST", &FBXFileSelect, &FBXFileName_Arr[0], static_cast<ImGuiID>(FBXFileName_Arr.size()), 20);
+	//ImGui::PopItemWidth();
 
 
 

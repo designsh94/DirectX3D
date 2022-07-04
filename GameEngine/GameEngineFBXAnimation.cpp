@@ -19,6 +19,7 @@ void GameEngineFBXAnimation::Load(const std::string& _Path)
 	}
 
 	FBXConvertScene();
+	CheckAnimation();
 }
 
 bool GameEngineFBXAnimation::LoadAnimation()
@@ -78,24 +79,8 @@ bool GameEngineFBXAnimation::CheckAnimation()
 	return true;
 }
 
-bool GameEngineFBXAnimation::CreateAnimationInfo(const std::string& _MeshName)
-{
-	GameEngineFBXMesh* Mesh = GameEngineFBXMeshManager::GetInst().Find(_MeshName);
-
-	if (nullptr == Mesh)
-	{
-		GameEngineDebug::MsgBoxError("존재하지 않는 매쉬를 통해서 애니메이션을 만들려고 했습니다.");
-	}
-
-	// 정점에 관한 정보만 수집
-	Mesh->MeshAnimationInfoCheck();
-
-	return true;
-}
-
 bool GameEngineFBXAnimation::AnimationLoad(GameEngineFBXMesh* _Mesh, fbxsdk::FbxNode* Node)
 {
-	return true;
 	//std::vector<FbxExBoneFrame> vecAniFrameData;
 	//vecAniFrameData.resize(_Fbx->GetBoneCount());
 
@@ -201,5 +186,23 @@ bool GameEngineFBXAnimation::AnimationLoad(GameEngineFBXMesh* _Mesh, fbxsdk::Fbx
 	//		}
 	//	}
 	//}
+
+	return true;
+}
+
+void GameEngineFBXAnimation::CalFbxExBoneFrameTransMatrix(GameEngineFBXMesh* _Mesh)
+{
+	if (0 == AnimationDatas.size())
+	{
+		GameEngineDebug::MsgBoxError("애니메이션 데이터가 존재하지 않는 매쉬로 애니메이션을 만들려고 했습니다.");
+		return;
+	}
+
+	for (size_t i = 0; i < AnimationDatas.size(); i++)
+	{
+		AnimationDatas[i].AniFrameData.resize(_Mesh->AllBones.size());
+	}
+
+	// 
 }
 

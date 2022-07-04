@@ -93,6 +93,24 @@ public:
 		return dynamic_cast<ComponentType*>(NewComponent);;
 	}
 
+	template<typename ComType>
+	std::vector<ComType*> GetTransformComponent()
+	{
+		std::vector<ComType*> Return;
+
+		for (auto& TransformComponent : TransformComponentList_)
+		{
+			if (typeid(*TransformComponent) != typeid(ComType))
+			{
+				continue;
+			}
+
+			Return.push_back(dynamic_cast<ComType*>(TransformComponent));
+		}
+
+		return Return;
+	}
+
 protected:
 	virtual void Start() {}
 	virtual void Update(float _DeltaTime) {}

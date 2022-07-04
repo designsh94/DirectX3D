@@ -20,6 +20,13 @@ private:
         std::vector<int> CheckKey_;
 
     public:
+        GameEngineKey() :
+            Down_(false), Press_(false), Up_(false), Free_(false)
+        {
+
+        }
+
+    public:
         void PushKey(int _CurKey)
         {
             CheckKey_.push_back(_CurKey);
