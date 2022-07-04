@@ -123,13 +123,9 @@ void GameEngineFBXWindow::OnGUI()
 	ImGui::ListBox("##FBXFILELIST", &FBXFileSelect, &FBXFileName_Arr[0], static_cast<ImGuiID>(FBXFileName_Arr.size()), 20);
 	ImGui::PopItemWidth();
 
-	
 
 
 
-	
-
-	
 
 
 	//// ListBox의 모든아이템을 검사하면서 로드정보상태에 따라 텍스트컬러를 변경한다.
