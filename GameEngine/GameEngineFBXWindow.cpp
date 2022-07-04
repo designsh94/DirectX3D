@@ -86,7 +86,7 @@ void GameEngineFBXWindow::OnGUI()
 #pragma region FBX File ListBox
 	// 사용자폰트 사용
 	ImGui::PushFont(TextFontStyle_Eng);
-	ImGui::Text("< FBX File List >");
+	ImGui::Text("FBX File List");
 	ImGui::PopFont();
 	
 	// 지정된경로의 FBX File List Get
