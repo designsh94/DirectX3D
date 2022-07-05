@@ -142,12 +142,18 @@ private: // ListBox Select Index
 	int ActorSelect;									// 현재목록의 선택된 액터 인덱스
 
 private: // 현재 Mesh & Animation
-	GameEngineFBXMesh* SelectMesh;						// 현재 선택된 Mesh(FBX File List Select)
-	GameEngineActor* SelectActor;						// 현재 선택된 Actor(Actor List Select)
+	GameEngineFBXMesh* SelectMesh;						// 현재 선택된 Mesh(FBX File List Select)		- Mesh Load 완료시
+	GameEngineFBXAnimation* SelectAnimation;			// 현재 선택된 Animation(FBX File List Select)	- Animation Load 완료시
+	GameEngineActor* SelectActor;						// 현재 선택된 Actor(Actor List Select)			- Actor Create 완료시
 
-public:
-	std::vector<std::string> ActorsNames;
-	std::vector<GameEngineActor*> Actors;
+private:
+	std::vector<std::string> ActorsNames;				// 현재 생성된 Actor 이름목록
+	std::vector<GameEngineActor*> Actors;				// 현재 생성된 Actor 목록
+
+private:
+	float4 CurActor_Position;							// 현재 선택된 Actor Position
+	float4 CurActor_Rotation;							// 현재 선택된 Actor Rotation
+	float4 CurActor_Scaling;							// 현재 선택된 Actor Scaling
 
 public:
 	GameEngineFBXWindow();

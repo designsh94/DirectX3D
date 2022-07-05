@@ -14,7 +14,11 @@ GameEngineFBXWindow::GameEngineFBXWindow() :
 	FBXFileSelect(-1),
 	ActorSelect(-1),
 	SelectMesh(nullptr),
-	SelectActor(nullptr)
+	SelectAnimation(nullptr),
+	SelectActor(nullptr),
+	CurActor_Position(float4::ZERO),
+	CurActor_Rotation(float4::ZERO),
+	CurActor_Scaling(float4::ONE)
 {
 	// 생성시 해당 윈도우에서 사용하려는 Font를 재정의한다.
 	ImGuiIO& IO = ImGui::GetIO();
@@ -202,7 +206,7 @@ void GameEngineFBXWindow::OnGUI()
 	// 현재 선택 파일의 메쉬정보 목록 작성
 	if (-1 != FBXFileSelect && nullptr != SelectMesh)
 	{
-		ImGui::BeginChildFrame(static_cast<ImGuiID>(reinterpret_cast<uint64_t>("##MESHINFOF_RAME")), ImVec2(500.f, 150.f), ImGuiWindowFlags_HorizontalScrollbar);
+		ImGui::BeginChildFrame(static_cast<ImGuiID>(reinterpret_cast<uint64_t>("##MESHINFO_FRAME")), ImVec2(500.f, 150.f), ImGuiWindowFlags_HorizontalScrollbar);
 
 		SelectMesh->RecursiveAllNode([&](fbxsdk::FbxNodeAttribute::EType _Type, fbxsdk::FbxNode* _Node, int _ParentReturn)
 			{
@@ -307,11 +311,11 @@ void GameEngineFBXWindow::OnGUI()
 	{
 		if (ImGui::Button("AnimationLoad", ImVec2(500.f, 25.f)))
 		{
-			GameEngineFBXAnimation* Animation = GameEngineFBXAnimationManager::GetInst().Find(AllFileNames[FBXFileSelect]);
-			if (nullptr == Animation)
+			SelectAnimation = GameEngineFBXAnimationManager::GetInst().Find(AllFileNames[FBXFileSelect]);
+			if (nullptr == SelectAnimation)
 			{
-				Animation = GameEngineFBXAnimationManager::GetInst().Load(Files[FBXFileSelect].GetFullPath());
-				if (false == Animation->LoadAnimation())
+				SelectAnimation = GameEngineFBXAnimationManager::GetInst().Load(Files[FBXFileSelect].GetFullPath());
+				if (false == SelectAnimation->LoadAnimation())
 				{
 					GameEngineDebug::MsgBox("애니메이션이 존재하지 않는 FBX입니다");
 					GameEngineFBXAnimationManager::GetInst().DeletePath(Files[FBXFileSelect].GetFullPath());
@@ -330,13 +334,105 @@ void GameEngineFBXWindow::OnGUI()
 	}
 
 	// 현재 선택 파일의 애니메이션정보 목록 작성
+	if (-1 != FBXFileSelect && nullptr != SelectAnimation)
+	{
+		ImGui::BeginChildFrame(static_cast<ImGuiID>(reinterpret_cast<uint64_t>("##ANIMATIONINFO_FRAME")), ImVec2(500.f, 150.f), ImGuiWindowFlags_HorizontalScrollbar);
 
+		SelectAnimation->RecursiveAllNode([&](fbxsdk::FbxNodeAttribute::EType _Type, fbxsdk::FbxNode* _Node, int _ParentReturn)
+			{
+				int Result = 0;
 
+				std::string TypeName = " ";
 
+				switch (_Type)
+				{
+				case fbxsdk::FbxNodeAttribute::eUnknown:
+					TypeName += "Unknown";
+					break;
+				case fbxsdk::FbxNodeAttribute::eNull:
+					TypeName += "Null";
+					break;
+				case fbxsdk::FbxNodeAttribute::eMarker:
+					TypeName += "Marker";
+					break;
+				case fbxsdk::FbxNodeAttribute::eSkeleton:
+					TypeName += "Skeleton";
+					break;
+				case fbxsdk::FbxNodeAttribute::eMesh:
+					TypeName += "Mesh";
+					break;
+				case fbxsdk::FbxNodeAttribute::eNurbs:
+					TypeName += "Nurbs";
+					break;
+				case fbxsdk::FbxNodeAttribute::ePatch:
+					TypeName += "Patch";
+					break;
+				case fbxsdk::FbxNodeAttribute::eCamera:
+					TypeName += "Camera";
+					break;
+				case fbxsdk::FbxNodeAttribute::eCameraStereo:
+					TypeName += "CameraStereo";
+					break;
+				case fbxsdk::FbxNodeAttribute::eCameraSwitcher:
+					TypeName += "CameraSwitcher";
+					break;
+				case fbxsdk::FbxNodeAttribute::eLight:
+					TypeName += "Light";
+					break;
+				case fbxsdk::FbxNodeAttribute::eOpticalReference:
+					TypeName += "OpticalReference";
+					break;
+				case fbxsdk::FbxNodeAttribute::eOpticalMarker:
+					TypeName += "OpticalMarker";
+					break;
+				case fbxsdk::FbxNodeAttribute::eNurbsCurve:
+					TypeName += "NurbsCurve";
+					break;
+				case fbxsdk::FbxNodeAttribute::eTrimNurbsSurface:
+					TypeName += "TrimNurbsSurface";
+					break;
+				case fbxsdk::FbxNodeAttribute::eBoundary:
+					TypeName += "Boundary";
+					break;
+				case fbxsdk::FbxNodeAttribute::eNurbsSurface:
+					TypeName += "NurbsSurface";
+					break;
+				case fbxsdk::FbxNodeAttribute::eShape:
+					TypeName += "Shape";
+					break;
+				case fbxsdk::FbxNodeAttribute::eLODGroup:
+					TypeName += "LODGroup";
+					break;
+				case fbxsdk::FbxNodeAttribute::eSubDiv:
+					TypeName += "SubDiv";
+					break;
+				case fbxsdk::FbxNodeAttribute::eCachedEffect:
+					TypeName += "CachedEffect";
+					break;
+				case fbxsdk::FbxNodeAttribute::eLine:
+					TypeName += "Line";
+					break;
+				default:
+					break;
+				}
 
+				if (1 == _ParentReturn)
+				{
+					std::string DisName = _Node->GetName() + TypeName;
 
+					Result = ImGui::TreeNodeEx(DisName.c_str());
+				}
+				return Result;
+			}, [&](fbxsdk::FbxNodeAttribute::EType _Type, fbxsdk::FbxNode* _Node, int _StartReturn)
+			{
+				if (_StartReturn == 1)
+				{
+					ImGui::TreePop();
+				}
+			}, 1);
 
-
+		ImGui::EndChildFrame();
+	}
 
 #pragma endregion
 
@@ -489,41 +585,89 @@ void GameEngineFBXWindow::ActorController()
 		return;
 	}
 
-	float4 Position = Actor->GetTransform()->GetWorldPosition();
-	float4 Rotation = Actor->GetTransform()->GetWorldRotation();
-	float4 Scaling = Actor->GetTransform()->GetWorldScaling();
+	// Current Actor World Value Get
+	CurActor_Position = Actor->GetTransform()->GetWorldPosition();
+	CurActor_Rotation = Actor->GetTransform()->GetWorldRotation();
+	CurActor_Scaling = Actor->GetTransform()->GetWorldScaling();
 
-	ImGui::DragFloat3("POSITION", Position.Arr1D, 1.0f, -FLT_MAX, FLT_MAX);
+	// POSITION
+	//ImGui::Text("POSITION  : ");
+	//ImGui::SameLine();
+
+	//ImGui::PushID("RESETPOSITION");
+	//if (true == ImGui::Button("RESET"))
+	//{
+	//	CurActor_Position = float4::ZERO;
+	//}
+	//ImGui::PopID();
+
+	// X
+	//ImGui::Text("X : ");
+	//ImGui::SameLine();
+
+	//ImGui::PushItemWidth(100.f);
+	//ImGui::SliderFloat("POSX", &CurActor_Position.x, -FLT_MAX + 0.1f, FLT_MAX - 0.1f, "%.3f", 1.0f);
+	//ImGui::PopItemWidth();
+	//ImGui::SameLine();
+	
+
+	//ImGui::InputFloat("##POSITION_X", &CurActor_Position.x);
+
+	// Y
+
+	// Z
+
+	
+
+	// SCALE
+	//ImGui::Text("SCALE       : ");
+
+
+
+
+
+	// ROTATION
+	//ImGui::Text("ROTATION : ");
+
+
+
+
+
+
+
+	ImGui::DragFloat3("POSITION", CurActor_Position.Arr1D, 1.0f, -FLT_MAX, FLT_MAX);
 	ImGui::SameLine();
 	ImGui::PushID("RESETPOSITION");
 	if (ImGui::Button("RESET"))
 	{
-		Position = float4::ZERO;
+		CurActor_Position = float4::ZERO;
 	}
 	ImGui::PopID();
 
-	ImGui::DragFloat3("SCALE", Scaling.Arr1D, 1.0f, -FLT_MAX, FLT_MAX);
+	ImGui::DragFloat3("SCALE", CurActor_Scaling.Arr1D, 1.0f, -FLT_MAX, FLT_MAX);
 	ImGui::SameLine();
 	ImGui::PushID("RESETSCALE");
 	if (ImGui::Button("RESET"))
 	{
-		Scaling = float4::ONE;
+		CurActor_Scaling = float4::ONE;
 	}
 	ImGui::PopID();
 
-	ImGui::DragFloat3("ROTATION", Rotation.Arr1D, 1.0f, -FLT_MAX, FLT_MAX);
+	ImGui::DragFloat3("ROTATION", CurActor_Rotation.Arr1D, 1.0f, -FLT_MAX, FLT_MAX);
 	ImGui::SameLine();
 	ImGui::PushID("RESETROTATION");
 	if (ImGui::Button("RESET"))
 	{
-		Rotation = float4::ZERO;
+		CurActor_Rotation = float4::ZERO;
 	}
 	ImGui::PopID();
 
-	Actor->GetTransform()->SetWorldPosition(Position);
-	Actor->GetTransform()->SetWorldRotationDegree(Rotation);
-	Actor->GetTransform()->SetWorldScaling(Scaling);
+	// 변경사항 즉시 적용
+	Actor->GetTransform()->SetWorldPosition(CurActor_Position);
+	Actor->GetTransform()->SetWorldRotationDegree(CurActor_Rotation);
+	Actor->GetTransform()->SetWorldScaling(CurActor_Scaling);
 
+	// Death Button
 	if (true == ImGui::Button("Death", ImVec2(500.f, 25.f)))
 	{
 		std::vector<GameEngineActor*>::iterator Iter = Actors.begin();
