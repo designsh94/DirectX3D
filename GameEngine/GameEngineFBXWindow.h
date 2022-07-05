@@ -104,8 +104,7 @@ public:
 
 class GameEngineFBXWindow : public GameEngineGUIWindow
 {
-#pragma region FONT 관련
-
+#pragma region 사용자타입폰트
 private:
 	ImFont* TextFontStyle_Eng;							// (알파벳용) : arialbd.ttf(Arial 굵게)
 	ImFont* LabelFontStyle_Eng;							// (알파벳용) : arialbd.ttf(Arial 굵게)
@@ -119,9 +118,17 @@ private:
 
 #pragma endregion
 
+public:
+	GameEngineDirectory FBXFilePath;					// FBX File 경로(외부에서 셋팅)
+
 private: // FBX File List
-	std::vector<GameEngineFile> Files;					// 현재 지정된경로의 FBX File Info
-	std::vector<std::string> FileNames;					// 현재 지정된경로의 FBX 파일명목록
+	std::vector<GameEngineFile> Files;					// 현재 지정된경로의 FBX File Info(모든파일)
+	std::vector<std::string> AllFileNames;				// 현재 지정된경로의 FBX 파일명목록(모든파일)
+	//std::vector<std::string> MeshFileNames;				// 현재 지정된경로의 FBX 파일명목록(메쉬정보를 포함한 파일) - 애니메이션을 포함하는 경우도 있음
+	//std::vector<std::string> AnimFileNames;				// 현재 지정된경로의 FBX 파일명목록(메쉬정보를 포함하지않은 파일) - 애니메이션 전용
+
+private: // 구분 목록(Mesh, Animation) : 애니메이션만 가지는 파일을 따로 관리하기위함
+
 
 private: // FBXFile Infomation State
 	std::map<std::string, LoadInfoState> FileState;		// FBX File 정보로드 상태
@@ -134,21 +141,9 @@ private: // ListBox Select Index
 	int FBXFileSelect;									// 현재목록의 선택된 파일 인덱스
 	int ActorSelect;									// 현재목록의 선택된 액터 인덱스
 
-private: // 
-	GameEngineFBXMesh* SelectMesh;						// 현재선택된 Mesh
-
-public:
-	struct RenderTargetDrawData
-	{
-	public:
-		std::string Name;
-		GameEngineRenderTarget* Target;
-		float4 Size_;
-		bool ScaleCheck;
-	};
-
-public:
-	GameEngineDirectory FBXFilePath;
+private: // 현재 Mesh & Animation
+	GameEngineFBXMesh* SelectMesh;						// 현재 선택된 Mesh(FBX File List Select)
+	GameEngineActor* SelectActor;						// 현재 선택된 Actor(Actor List Select)
 
 public:
 	std::vector<std::string> ActorsNames;
@@ -168,15 +163,17 @@ protected:
 	void OnGUI() override;
 
 private:
-	bool FBXFilePathCompare();
-	void FrameUpdateClear();
+	bool FBXFilePathCompare();						// 현재 지정된 경로의 파일목록과 현재 에디터상에서 표시하는 파일목록을 비교
+	void FBXRelatedListUpdate();					// FBX 관련 목록 갱신
 
 private:
-	void CreateActorControl();
-
+	// void RecursiveAllNode(std::function<int(fbxsdk::FbxNodeAttribute::EType, fbxsdk::FbxNode*, int)> _InitCallBack, std::function<void(fbxsdk::FbxNodeAttribute::EType, fbxsdk::FbxNode*, int)> _EndCallBack, int _ParentReturn)
+	int CurMeshNodeInfo();							// 현재 선택된 파일의 메쉬정보
+	
 
 private:
 	void ActorControl();
 
+public:
 };
 
