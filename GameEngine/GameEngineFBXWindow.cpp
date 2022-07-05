@@ -48,7 +48,7 @@ void GameEngineFBXWindow::OnGUI()
 	ImGui::PushFont(LabelFontStyle_Eng);
 
 	// Font Color로 특정 목록의 타입을 구별한다.
-	ImGui::Text("FBXFile Infomation State : ");
+	ImGui::Text("FBXFile Infomation State Color : ");
 
 	// All Load End(메쉬와 애니메이션을 모두 로드한 파일 : 액터생성가능) - GREEN
 	ImGui::PushStyleColor(ImGuiCol_::ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
@@ -84,84 +84,164 @@ void GameEngineFBXWindow::OnGUI()
 	// 한줄 띄우기 위함
 	ImGui::Text("");
 
-#pragma region FBX File ListBox
+#pragma region FBX File ComboBox
+
 	// 사용자폰트 사용
 	ImGui::PushFont(TextFontStyle_Eng);
 	ImGui::Text("FBXFILE LIST");
 	ImGui::PopFont();
-	
-	// 지정된경로의 FBX File List Get
-	std::vector<GameEngineFile> Files = FBXFilePath.GetAllFile("FBX");
-	if (0 == Files.size())
+
+	// FBX File Load State
+	// 단, 선택된 파일이 있어야지만 상태가 표시된다.
+	if (-1 != FBXFileSelect)
 	{
-		std::string CurPath = FBXFilePath.GetFullPath();
-		GameEngineDebug::MsgBoxError(CurPath + " : " "경로에 파일이 존재하지않습니다.");
-		return;
+		ImGui::SameLine();
+
+		ImGui::PushFont(TextFontStyle_Eng);
+		ImGui::Text("State : ");
+		ImGui::PopFont();
+
+		ImGui::SameLine();
+		
+		// 상태값 렌더링
+		ImVec4 StateColor = ImVec4(0.f, 0.f, 0.f, 0.f);
+
+		std::map<std::string, LoadInfoState>::iterator FindIter = FileState.find(FileNames[FBXFileSelect]);
+		if (FileState.end() != FindIter)
+		{
+			switch ((*FindIter).second.GetLoadInfoState())
+			{
+				case LoadState::FILE:
+				{
+					StateColor = ImVec4(1.f, 1.f, 1.f, 1.f);
+					break;
+				}
+				case LoadState::MESH:
+				{
+					StateColor = ImVec4(1.f, 0.f, 0.f, 1.f);
+					break;
+				}
+				case LoadState::ANIMATION:
+				{
+					StateColor = ImVec4(0.f, 0.f, 1.f, 1.f);
+					break;
+				}
+				case LoadState::ALL:
+				{
+					StateColor = ImVec4(0.f, 1.f, 0.f, 1.f);
+					break;
+				}
+			}
+		}
+
+		const ImVec2 posR = ImGui::GetCursorScreenPos();
+		ImDrawList* DrawList = ImGui::GetWindowDrawList();
+		DrawList->AddRectFilled(posR, ImVec2(posR.x + 20.f, posR.y + 20.f), ImGui::GetColorU32(StateColor));
+
+		// \n
+		ImGui::Text("");
 	}
-
-	// FBX File ListBox 작성을 위한 준비
-	// 1. 파일명 저장(원본, 갱신)
-	// 2. 로드한 파일들의 현재 정보상태를 저장
+	
+	// FBX File ComboBox 작성준비
 	std::vector<const char*> FBXFileName_Arr;
-	for (auto& Ref : Files)
+	for (auto& FileName : FileNames)
 	{
-		// 지정된 경로에 위치한 모든 파일의 이름을 Vector에 수집
-		std::string& Name = FileNames.emplace_back();
-		Name = Ref.FileName();
-
-		// 원본파일명 목록에 저장
-		FileNames_Origin.push_back(Name);
-
 		// FBXFileName_Arr List 추가
-		FBXFileName_Arr.push_back(FileNames[FileNames.size() - 1].c_str());
+		FBXFileName_Arr.push_back(FileName.c_str());
 	}
 
 	// Create File FBX Select ComboBox
 	if (true == ImGui::Combo("##FBXFILELIST", &FBXFileSelect, &FBXFileName_Arr[0], static_cast<int>(FBXFileName_Arr.size())))
 	{
-		// 선택한 FBX 파일이 존재할때
+		// 선택한 파일이 존재하고,
 		if (-1 != FBXFileSelect)
 		{
-			// 현재 선택된 FBX File의 Mesh Setting
-			SelectMesh = GameEngineFBXMeshManager::GetInst().Find(FileNames_Origin[FBXFileSelect]);
-		}
-	}
-	
-#pragma endregion
-
-	// 해당 FBX File의 모든정보 로드완료시 
-	// MeshLoad, AnimationLoad Button Disabled & 
-	ImGui::PushFont(ButtonFontStyle_Eng);
-
-	// MeshLoad Button
-	if (nullptr == SelectMesh)
-	{
-		if (true == ImGui::Button("MESH LOAD", ImVec2(100.f, 30.f)))
-		{
-			// Mesh Load
-			GameEngineFBXMesh* Mesh = GameEngineFBXMeshManager::GetInst().Load(Files[FBXFileSelect].GetFullPath());
-			Mesh->MeshLoad();
-			if (0 != Mesh->GetMeshSet().size())
+			// 현재 선택된 파일의 메쉬 Get
+			SelectMesh = GameEngineFBXMeshManager::GetInst().Find(FileNames[FBXFileSelect]);
+			if (nullptr == SelectMesh)
 			{
-				Mesh->CreateRenderingBuffer();
+				// 최초 선택
+				// 즉, 해당 파일의 Mesh 정보를 로드한적이없다고 판단하여 로드한다.
+				SelectMesh = GameEngineFBXMeshManager::GetInst().Load(Files[FBXFileSelect].GetFullPath());
+				SelectMesh->MeshLoad();
+				if (0 != SelectMesh->GetMeshSet().size())
+				{
+					SelectMesh->CreateRenderingBuffer();
+
+					// 해당 파일의 모든 메쉬정보로드에 성공하였으므로 해당 파일의 로드정보상태를 갱신
+					std::map<std::string, LoadInfoState>::iterator FindIter = FileState.find(FileNames[FBXFileSelect]);
+					if (FileState.end() != FindIter)
+					{
+						(*FindIter).second.MeshLoadFinish();
+					}
+				}
+				else
+				{
+					GameEngineDebug::MsgBox("매쉬정보가 존재하지 않는 FBX입니다");
+					GameEngineFBXMeshManager::GetInst().DeletePath(Files[FBXFileSelect].GetFullPath());
+				}
 			}
 			else
 			{
-				GameEngineDebug::MsgBox("매쉬정보가 존재하지 않는 FBX입니다");
-				GameEngineFBXMeshManager::GetInst().DeletePath(Files[FBXFileSelect].GetFullPath());
+				// 중복선택
+				GameEngineDebug::MsgBox("이미 로드한 매쉬정보가 존재합니다");
 			}
 		}
 	}
 
-	ImGui::SameLine();
+#pragma endregion
 
-	// Create Actor Button
-	// 단, Mesh정보가 로드되었다면 활성화
-	if (nullptr != SelectMesh && 0 != SelectMesh->GetMeshSet().size() && true == ImGui::Button("Create Actor"))
+#pragma region Actors
+
+	// Mesh 정보를 로드한 파일이라면 액터생성 가능
+	if (-1 != FBXFileSelect)
 	{
-		int a = 0;
+		std::map<std::string, LoadInfoState>::iterator FindIter = FileState.find(FileNames[FBXFileSelect]);
+		if (FileState.end() != FindIter)
+		{
+			// 메쉬정보가 로드완료된 FBX File일때 액터생성가능
+			if ((*FindIter).second.GetLoadInfoState() == LoadState::MESH)
+			{
+				if (true == ImGui::Button("Create Actor"))
+				{
+					// 액터 생성
+					if (0 != SelectMesh->GetMeshSet().size())
+					{
+						GameEngineActor* NewActor = GameEngineCore::CurrentLevel()->CreateActor<GameEngineActor>();
+						Actors.push_back(NewActor);
+
+						GameEngineFBXRenderer* Renderer = NewActor->CreateTransformComponent<GameEngineFBXRenderer>(NewActor->GetTransform());
+
+						Renderer->SetFBXMesh(SelectMesh->GetName(), "Color");
+
+						for (int i = 0; i < Renderer->GetRenderSetCount(); i++)
+						{
+							Renderer->GetRenderSet(i).ShaderHelper->SettingConstantBufferSet("ResultColor", float4::RED);
+						}
+					}
+					else
+					{
+						GameEngineDebug::MsgBox("매쉬노드 존재하지 않는 FBX 입니다.");
+					}
+				}
+			}
+		}
+
+		// 생성된 액터목록 작성
+
+
+
+
+
+
+
+
+
 	}
-	ImGui::PopFont();
+
+#pragma endregion
+
+
 
 #pragma region InfoLoadEnd List(정보로드완료된 목록)
 
@@ -169,19 +249,6 @@ void GameEngineFBXWindow::OnGUI()
 
 
 #pragma endregion
-
-
-	//// Animation Load Button
-	//if (true == ImGui::Button("ANIM LOAD", ImVec2(100.f, 30.f)))
-	//{
-	//	// FBX File 로드상태 갱신
-	//	SetCurFileLoadFlag(FileNames_Origin[FBXFileSelect], LoadInfoState::ANIMATION);
-
-
-	//	// 
-
-
-	//}
 
 
 
@@ -575,20 +642,61 @@ void GameEngineFBXWindow::OnGUI()
 	//ActorControl();
 }
 
-void GameEngineFBXWindow::FrameUpdateClear()
+bool GameEngineFBXWindow::FBXFilePathCompare()
 {
-	// List 관련 목록 클리어
-	FileNames.clear();
-	FileNames_Origin.clear();
-
-	// Select Current Mesh Clear
-	if (-1 == FBXFileSelect)
+	// 지정된 경로의 파일변화가 있다면 파일목록갱신
+	Files.clear();
+	Files = FBXFilePath.GetAllFile("FBX");
+	if (0 == Files.size())
 	{
-		SelectMesh = nullptr;
+		std::string CurPath = FBXFilePath.GetFullPath();
+		GameEngineDebug::MsgBoxError(CurPath + " : " "경로에 파일이 존재하지않습니다.");
+		return false;
 	}
 
-	// 
+	std::vector<std::string> NewFiles;
+	for (auto& NewFileName : Files)
+	{
+		NewFiles.push_back(NewFileName.GetFileName());
+	}
 
+	// 현재 에디터에 포함된 파일목록과 비교처리
+	if (FileNames.size() == NewFiles.size() && true == std::equal(FileNames.begin(), FileNames.end(), NewFiles.begin()))
+	{
+		// 비교하여 동일한 목록이면 false 반환
+		return false;
+	}
+
+	// 아니면 변화있으므로 파일이름목록 갱신 및 파일목록 로드가 끝났으므로 현재 로드상태정보 셋팅
+	FileNames.clear();
+	FileState.clear();
+	for (auto& FileName : Files)
+	{
+		// 파일명 목록 작성
+		FileNames.push_back(FileName.GetFileName());
+
+		// 파일별 정보로드 상태정보 작성
+		FileState.insert(std::make_pair(FileName.GetFileName(), LoadInfoState(LoadState::FILE)));
+	}
+
+	return true;
+}
+
+void GameEngineFBXWindow::FrameUpdateClear()
+{
+	// FBX FILE PATH 검사
+	// 단, 변화가 있다면 파일목록이 바뀐다.
+	if (true == FBXFilePathCompare())
+	{
+		// 지정된 경로에 파일의 변화가 일어났으므로 
+		// 현재 선택된 메쉬와 FBX File Index를 초기화
+
+		// Select Current Mesh Clear
+		SelectMesh = nullptr;
+
+		// Select FBXFile Current Index Clear
+		FBXFileSelect = -1;
+	}
 }
 
 void GameEngineFBXWindow::CreateActorControl()
