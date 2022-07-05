@@ -167,12 +167,7 @@ private:
 	void FBXRelatedListUpdate();					// FBX 관련 목록 갱신
 
 private:
-	// void RecursiveAllNode(std::function<int(fbxsdk::FbxNodeAttribute::EType, fbxsdk::FbxNode*, int)> _InitCallBack, std::function<void(fbxsdk::FbxNodeAttribute::EType, fbxsdk::FbxNode*, int)> _EndCallBack, int _ParentReturn)
-	int CurMeshNodeInfo();							// 현재 선택된 파일의 메쉬정보
-	
-
-private:
-	void ActorControl();
+	void ActorController();							// 생성된 액터 위치/크기/회전 셋팅
 
 public:
 };
