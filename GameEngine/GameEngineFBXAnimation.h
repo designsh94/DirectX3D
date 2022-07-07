@@ -120,8 +120,10 @@ public:
 	void Load(const std::string& _Path);
 
 public:
-	bool AnimationLoad(GameEngineFBXMesh* _Mesh, fbxsdk::FbxNode* Node);
+	bool AnimationLoad(GameEngineFBXMesh* _Mesh, fbxsdk::FbxNode* _Node);
+	fbxsdk::FbxAMatrix GetGeometryTransformation(fbxsdk::FbxNode* _pNode);
 	void CalFbxExBoneFrameTransMatrix(GameEngineFBXMesh* _Mesh);
+	void ProcessAnimationLoad(GameEngineFBXMesh* _Mesh, fbxsdk::FbxNode* _pNode);
 
 public:
 };

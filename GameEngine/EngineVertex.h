@@ -26,6 +26,6 @@ public:
 	float4 NORMAL;
 	float4 TANGENT;
 	float4 BINORMAL;
-	float4 Weight;
-	int Index[4];
+	float4 WEIGHT;			// °¡ÁßÄ¡¶û
+	int BLENDINDICES[4];	// Bone Indexs
 };

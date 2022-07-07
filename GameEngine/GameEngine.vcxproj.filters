@@ -283,6 +283,12 @@
     <Filter Include="Resources\00Buffer\Index">
       <UniqueIdentifier>{5b32f754-a64e-4ade-9a06-a84bdef94caf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resources\00Buffer\Structured">
+      <UniqueIdentifier>{f37a4feb-bdd2-4899-a093-a8f7df0817e5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\99Manager\Structured">
+      <UniqueIdentifier>{763f0625-bbc5-4b49-afef-41be93e64dd3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PreCompile.h">
@@ -543,6 +549,12 @@
     <ClInclude Include="EngineVertex.h">
       <Filter>Global\Vertex</Filter>
     </ClInclude>
+    <ClInclude Include="GameEngineStructuredBufferManager.h">
+      <Filter>Resources\99Manager\Structured</Filter>
+    </ClInclude>
+    <ClInclude Include="GameEngineStructuredBuffer.h">
+      <Filter>Resources\00Buffer\Structured</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PreCompile.cpp">
@@ -793,6 +805,12 @@
     </ClCompile>
     <ClCompile Include="EngineVertex.cpp">
       <Filter>Global\Vertex</Filter>
+    </ClCompile>
+    <ClCompile Include="GameEngineStructuredBufferManager.cpp">
+      <Filter>Resources\99Manager\Structured</Filter>
+    </ClCompile>
+    <ClCompile Include="GameEngineStructuredBuffer.cpp">
+      <Filter>Resources\00Buffer\Structured</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -329,3 +329,63 @@ void GameEngineFBX::RecursiveAllNode(fbxsdk::FbxNode* _Node, std::function<int(f
 		}
 	}
 }
+
+float4x4 GameEngineFBX::FbxMatTofloat4x4(const fbxsdk::FbxAMatrix& _BaseTrans)
+{
+	float4x4 Mat;
+
+	for (int y = 0; y < 4; y++)
+	{
+		for (int x = 0; x < 4; x++)
+		{
+			Mat.Arr2D[y][x] = (float)_BaseTrans.Get(y, x);
+		}
+	}
+
+	return Mat;
+}
+
+fbxsdk::FbxAMatrix GameEngineFBX::float4x4ToFbxAMatrix(const float4x4& _MATRIX)
+{
+	fbxsdk::FbxAMatrix mat;
+	for (int y = 0; y < 4; y++)
+	{
+		for (int x = 0; x < 4; x++)
+		{
+			mat.mData[y].mData[x] = _MATRIX.Arr2D[y][x];
+		}
+	}
+
+	return mat;
+}
+
+float4 GameEngineFBX::FbxVecTofloat4(const fbxsdk::FbxVector4& _BaseVector)
+{
+	float4 Vec;
+	Vec.Arr1D[0] = (float)_BaseVector.mData[0];
+	Vec.Arr1D[1] = (float)_BaseVector.mData[1];
+	Vec.Arr1D[2] = (float)_BaseVector.mData[2];
+	Vec.Arr1D[3] = (float)_BaseVector.mData[3];
+
+	return Vec;
+}
+
+float4 GameEngineFBX::FbxVecToTransform(const fbxsdk::FbxVector4& _BaseVector)
+{
+	float4 Vec;
+	Vec.Arr1D[0] = (float)_BaseVector.mData[0];
+	Vec.Arr1D[1] = (float)_BaseVector.mData[1];
+	Vec.Arr1D[2] = -(float)_BaseVector.mData[2];
+	Vec.Arr1D[3] = (float)_BaseVector.mData[3];
+	return Vec;
+}
+
+float4 GameEngineFBX::FbxQuaternionTofloat4(const fbxsdk::FbxQuaternion& _BaseQ)
+{
+	float4 Vec;
+	Vec.Arr1D[0] = (float)_BaseQ.mData[0];
+	Vec.Arr1D[1] = (float)_BaseQ.mData[1];
+	Vec.Arr1D[2] = -(float)_BaseQ.mData[2];
+	Vec.Arr1D[3] = -(float)_BaseQ.mData[3];
+	return Vec;
+}

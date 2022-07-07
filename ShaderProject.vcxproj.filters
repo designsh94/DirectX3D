@@ -39,5 +39,11 @@
     <FxCompile Include="EngineResources\Shader\TileMap.fx">
       <Filter>Engine</Filter>
     </FxCompile>
+    <FxCompile Include="..\AR38\EngineResources\Shader\AniHeader.fx">
+      <Filter>Engine</Filter>
+    </FxCompile>
+    <FxCompile Include="..\AR38\EngineResources\Shader\ColorAni.fx">
+      <Filter>Engine</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

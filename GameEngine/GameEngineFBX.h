@@ -57,6 +57,13 @@ protected:
 	void FBXConvertScene();
 	void RecursiveAllNode(fbxsdk::FbxNode* _Node, std::function<int(fbxsdk::FbxNodeAttribute::EType, fbxsdk::FbxNode*, int)> _InitCallBack, std::function<void(fbxsdk::FbxNodeAttribute::EType, fbxsdk::FbxNode*, int)> _EndCallBack, int _ParentReturn);
 
+protected:
+	float4x4 FbxMatTofloat4x4(const fbxsdk::FbxAMatrix& _BaseTrans);
+	fbxsdk::FbxAMatrix float4x4ToFbxAMatrix(const float4x4& _MATRIX);
+	float4 FbxVecTofloat4(const fbxsdk::FbxVector4& _BaseVector);
+	float4 FbxVecToTransform(const fbxsdk::FbxVector4& _BaseVector);
+	float4 FbxQuaternionTofloat4(const fbxsdk::FbxQuaternion& _BaseQ);
+
 public:
 };
 

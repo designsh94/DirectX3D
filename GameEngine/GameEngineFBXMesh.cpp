@@ -1,75 +1,19 @@
 #include "PreCompile.h"
 #include "GameEngineFBXMesh.h"
+#include "GameEngineStructuredBuffer.h"
 
 GameEngineFBXMesh::GameEngineFBXMesh() :
-	IsAnimationLoadOnce(false)
+	IsAnimationLoadOnce(false),
+	AnimationBuffer(nullptr)
 {
 }
 
 GameEngineFBXMesh::~GameEngineFBXMesh() 
 {
-}
-
-float4x4 GameEngineFBXMesh::FbxMatTofloat4x4(const fbxsdk::FbxAMatrix& _BaseTrans)
-{
-	float4x4 Mat;
-
-	for (int y = 0; y < 4; y++)
+	if (nullptr != AnimationBuffer)
 	{
-		for (int x = 0; x < 4; x++)
-		{
-			Mat.Arr2D[y][x] = (float)_BaseTrans.Get(y, x);
-		}
+		delete AnimationBuffer;
 	}
-
-	return Mat;
-}
-
-fbxsdk::FbxAMatrix GameEngineFBXMesh::float4x4ToFbxAMatrix(const float4x4& _MATRIX)
-{
-	fbxsdk::FbxAMatrix mat;
-	for (int y = 0; y < 4; y++)
-	{
-		for (int x = 0; x < 4; x++)
-		{
-			mat.mData[y].mData[x] = _MATRIX.Arr2D[y][x];
-		}
-	}
-
-	return mat;
-}
-
-float4 GameEngineFBXMesh::FbxVecTofloat4(const fbxsdk::FbxVector4& _BaseVector)
-{
-	float4 Vec;
-	Vec.Arr1D[0] = (float)_BaseVector.mData[0];
-	Vec.Arr1D[1] = (float)_BaseVector.mData[1];
-	Vec.Arr1D[2] = (float)_BaseVector.mData[2];
-	Vec.Arr1D[3] = (float)_BaseVector.mData[3];
-
-	return Vec;
-}
-
-float4 GameEngineFBXMesh::FbxVecToTransform(const fbxsdk::FbxVector4& _BaseVector)
-{
-	float4 Vec;
-	Vec.Arr1D[0] = (float)_BaseVector.mData[0];
-	Vec.Arr1D[1] = (float)_BaseVector.mData[1];
-	Vec.Arr1D[2] = -(float)_BaseVector.mData[2];
-	Vec.Arr1D[3] = (float)_BaseVector.mData[3];
-
-	return Vec;
-}
-
-float4 GameEngineFBXMesh::FbxQuaternionTofloat4(const fbxsdk::FbxQuaternion& _BaseQ)
-{
-	float4 Vec;
-	Vec.Arr1D[0] = (float)_BaseQ.mData[0];
-	Vec.Arr1D[1] = (float)_BaseQ.mData[1];
-	Vec.Arr1D[2] = -(float)_BaseQ.mData[2];
-	Vec.Arr1D[3] = -(float)_BaseQ.mData[3];
-
-	return Vec;
 }
 
 void GameEngineFBXMesh::Load(const std::string& _Path) 
@@ -81,6 +25,8 @@ void GameEngineFBXMesh::Load(const std::string& _Path)
 	}
 
 	FBXConvertScene();
+	MeshLoad();
+	ImportBone();
 }
 
 fbxsdk::FbxNode* GameEngineFBXMesh::RecursiveFindParentLodGroup(fbxsdk::FbxNode* parentNode)
@@ -445,6 +391,9 @@ void GameEngineFBXMesh::VertexBufferCheck()
 			VtxData[controlPointIndex].POSITION.w = 1.0f;
 		}
 
+		// 
+		FbxMeshSetMaterialSetting(pMeshNode, &DrawMesh);
+
 		fbxsdk::FbxStringList UVSetNameList;
 		pMesh->GetUVSetNames(UVSetNameList);
 		int uvSetCount = UVSetNameList.GetCount();
@@ -523,6 +472,8 @@ void GameEngineFBXMesh::VertexBufferCheck()
 			IdxData[materialId].push_back(IndexArray[2]);
 			IdxData[materialId].push_back(IndexArray[1]);
 		}
+
+		DrawMesh.FbxVertexMap.insert(std::make_pair(pMesh, &VtxData));
 	}
 }
 
@@ -562,6 +513,310 @@ void GameEngineFBXMesh::CreateIndexBuffer()
 	}
 }
 
+void GameEngineFBXMesh::ImportCluster()
+{
+	size_t meshCount = MeshInfos.size();
+	if (0 == meshCount)
+	{
+		return;
+	}
+
+	for (size_t n = 0; n < meshCount; ++n)
+	{
+		FbxExMeshInfo& meshInfo = MeshInfos.at(n);
+		fbxsdk::FbxNode* pNode = meshInfo.Mesh->GetNode();
+		fbxsdk::FbxMesh* FbxMesh = meshInfo.Mesh;
+		const int SkinDeformerCount = FbxMesh->GetDeformerCount(fbxsdk::FbxDeformer::eSkin);
+		if (0 == SkinDeformerCount)
+		{
+			continue;
+		}
+		std::vector<FbxClusterData>& vecClusterData = ClusterData[meshInfo.VertexOrder];
+
+		if (ClusterData.end() == ClusterData.find(meshInfo.VertexOrder))
+		{
+			ClusterData.insert(std::make_pair(meshInfo.VertexOrder, std::vector<FbxClusterData>()));
+		}
+
+		for (int DeformerIndex = 0; DeformerIndex < SkinDeformerCount; DeformerIndex++)
+		{
+			fbxsdk::FbxSkin* Skin = (fbxsdk::FbxSkin*)FbxMesh->GetDeformer(DeformerIndex, fbxsdk::FbxDeformer::eSkin);
+			for (int ClusterIndex = 0; ClusterIndex < Skin->GetClusterCount(); ClusterIndex++)
+			{
+				vecClusterData.push_back(FbxClusterData());
+				FbxClusterData& clusterData = vecClusterData[vecClusterData.size() - 1];
+				clusterData.Cluster = Skin->GetCluster(ClusterIndex);
+				clusterData.Mesh = FbxMesh;
+				clusterData.LinkName = clusterData.Cluster->GetLink()->GetName();
+			}
+		}
+	}
+}
+
+void GameEngineFBXMesh::LoadSkinAndCluster()
+{
+	ImportCluster();
+
+	std::map<int, FbxMeshSet>::iterator Start = AllMeshMap.begin();
+	std::map<int, FbxMeshSet>::iterator End = AllMeshMap.end();
+	for (; Start != End; ++Start)
+	{
+		FbxMeshSet& MeshInfo = (*Start).second;
+		std::vector<FbxClusterData>& ClusterInfo = ClusterData[(*Start).first];
+
+		// 클러스터는 가중치 정보와 인덱스 정보를 가지고 있는데
+		// 클러스터를 통해서 정보를 가져오고
+		LoadAnimationVertexData(&MeshInfo, ClusterInfo);
+
+		// 진짜 가중치를 계산한다.
+		CalAnimationVertexData((*Start).second);
+	}
+}
+
+void GameEngineFBXMesh::LoadAnimationVertexData(FbxMeshSet* _DrawData, const std::vector<FbxClusterData>& vecClusterData)
+{
+	for (auto& clusterData : vecClusterData)
+	{
+		if (nullptr == clusterData.Cluster->GetLink())
+		{
+			continue;
+		}
+
+		std::string StrBoneName = clusterData.LinkName;
+		Bone* pBone = FindBone(StrBoneName);
+		if (nullptr == pBone)
+		{
+			continue;
+		}
+
+		DrawSetWeightAndIndexSetting(_DrawData, clusterData.Mesh, clusterData.Cluster, pBone->Index);
+	}
+}
+
+void GameEngineFBXMesh::DrawSetWeightAndIndexSetting(FbxMeshSet* _DrawSet, fbxsdk::FbxMesh* _Mesh, fbxsdk::FbxCluster* _Cluster, int _BoneIndex)
+{
+	int iIndexCount = _Cluster->GetControlPointIndicesCount();
+
+	for (size_t i = 0; i < iIndexCount; i++)
+	{
+		FbxExIW IW;
+		IW.Index = _BoneIndex;
+
+		IW.Weight = _Cluster->GetControlPointWeights()[i];
+		int ControlPointIndices = _Cluster->GetControlPointIndices()[i];
+
+		_DrawSet->MapWI[_Mesh][ControlPointIndices].push_back(IW);
+	}
+}
+
+void GameEngineFBXMesh::FbxMeshSetMaterialSetting(fbxsdk::FbxNode* _Node, FbxMeshSet* _RenderData)
+{
+	int MtrlCount = _Node->GetMaterialCount();
+
+	if (MtrlCount > 0)
+	{
+		_RenderData->MatialData.push_back(std::vector<FbxExRenderingPipeLineSettingData>());
+
+		std::vector<FbxExRenderingPipeLineSettingData>& MatrialSet = _RenderData->MatialData[_RenderData->MatialData.size() - 1];
+
+		for (int i = 0; i < MtrlCount; i++)
+		{
+			fbxsdk::FbxSurfaceMaterial* pMtrl = _Node->GetMaterial(i);
+
+			if (nullptr == pMtrl)
+			{
+				GameEngineDebug::MsgBoxError("if (nullptr == pMtrl) 메테리얼 정보가 존재하지 않습니다");
+				continue;
+			}
+
+			MatrialSet.push_back(FbxExRenderingPipeLineSettingData());
+			FbxExRenderingPipeLineSettingData& MatData = MatrialSet[MatrialSet.size() - 1];
+			MatData.Name = pMtrl->GetName();
+			// fbxsdk::FbxSurfaceMaterial::sDiffuse = 0x00007ff61122bf40 "DiffuseColor"
+			// fbxsdk::FbxSurfaceMaterial::sDiffuseFactor = 0x00007ff61122bf50 "DiffuseFactor"
+			MatData.DifColor = MaterialColor(pMtrl, "DiffuseColor", "DiffuseFactor");
+			MatData.AmbColor = MaterialColor(pMtrl, "AmbientColor", "AmbientFactor");
+			MatData.SpcColor = MaterialColor(pMtrl, "SpecularColor", "SpecularFactor");
+			MatData.EmvColor = MaterialColor(pMtrl, "EmissiveColor", "EmissiveFactor");
+			MatData.SpecularPower = MaterialFactor(pMtrl, "SpecularFactor");
+			// fbxsdk::FbxSurfaceMaterial::sShininess = 0x00007ff61122bf80 "ShininessExponent"
+			// fbxsdk::FbxSurfaceMaterial::sTransparencyFactor = 0x00007ff61122bfd8 "TransparencyFactor"
+			MatData.Shininess = MaterialFactor(pMtrl, "ShininessExponent");
+			MatData.TransparencyFactor = MaterialFactor(pMtrl, "TransparencyFactor");
+
+			MatData.DifTexturePath = MaterialTex(pMtrl, "DiffuseColor");
+			// fbxsdk::FbxSurfaceMaterial::sNormalMap = 0x00007ff68291bfa0 "NormalMap"
+			MatData.NorTexturePath = MaterialTex(pMtrl, "NormalMap");
+			MatData.SpcTexturePath = MaterialTex(pMtrl, "SpecularColor");
+
+			//if (MatData.DifTexturePath != L"")
+			//{
+			//	if (true == GameEnginePath::IsExist(MatData.DifTexturePath))
+			//	{
+			//		DirectTexture2D::Load(MatData.DifTexturePath);
+			//		MatData.DifTextureName = GameEnginePath::GetFileName(MatData.DifTexturePath);
+			//	}
+			//}
+
+			//if (MatData.BmpTexturePath != L"")
+			//{
+			//	if (true == GameEnginePath::IsExist(MatData.BmpTexturePath))
+			//	{
+			//		DirectTexture2D::Load(MatData.BmpTexturePath);
+			//		MatData.BmpTextureName = GameEnginePath::GetFileName(MatData.BmpTexturePath);
+			//	}
+			//}
+
+			//if (MatData.SpcTexturePath != L"")
+			//{
+			//	if (true == GameEnginePath::IsExist(MatData.SpcTexturePath))
+			//	{
+			//		DirectTexture2D::Load(MatData.SpcTexturePath);
+			//		MatData.SpcTextureName = GameEnginePath::GetFileName(MatData.SpcTexturePath);
+			//	}
+			//}
+
+		}
+
+	}
+	else {
+		GameEngineDebug::MsgBoxError("매쉬는 존재하지만 재질은 존재하지 않습니다.");
+	}
+}
+
+float4 GameEngineFBXMesh::MaterialColor(fbxsdk::FbxSurfaceMaterial* pMtrl, const char* _ColorName, const char* _FactorName)
+{
+	FbxDouble3 vResult(0, 0, 0);
+	double dFactor = 0;
+	FbxProperty ColorPro = pMtrl->FindProperty(_ColorName);
+	FbxProperty FactorPro = pMtrl->FindProperty(_FactorName);
+
+	if (true == ColorPro.IsValid() && true == FactorPro.IsValid())
+	{
+		vResult = ColorPro.Get<FbxDouble3>();
+		dFactor = FactorPro.Get<FbxDouble>();
+
+		if (dFactor != 1)
+		{
+			vResult[0] *= dFactor;
+			vResult[1] *= dFactor;
+			vResult[2] *= dFactor;
+		}
+	}
+
+	return float4((float)vResult[0], (float)vResult[1], (float)vResult[2]);
+}
+
+float GameEngineFBXMesh::MaterialFactor(fbxsdk::FbxSurfaceMaterial* pMtrl, const char* _FactorName)
+{
+	double dFactor = 0;
+	FbxProperty FactorPro = pMtrl->FindProperty(_FactorName);
+
+	if (true == FactorPro.IsValid())
+	{
+		dFactor = FactorPro.Get<FbxDouble>();
+	}
+
+	return (float)dFactor;
+}
+
+std::string GameEngineFBXMesh::MaterialTex(fbxsdk::FbxSurfaceMaterial* pMtrl, const char* _FactorName)
+{
+	return "";
+
+	fbxsdk::FbxProperty TexturePro = pMtrl->FindProperty(_FactorName);
+	std::string Str;
+	if (true == TexturePro.IsValid())
+	{
+		fbxsdk::FbxObject* pFileTex = TexturePro.GetFbxObject();
+
+		int a = 0;
+
+		//TexturePro.
+		// int iTexCount = TexturePro.GetSrcObjectCount<FbxFileTexture>();
+
+		//if (iTexCount > 0)
+		//{
+		//	FbxFileTexture* pFileTex = TexturePro.GetSrcObject<FbxFileTexture>(0);
+
+		//	// TexturePro.
+
+		//	if (nullptr != pFileTex)
+		//	{
+		//		Str = pFileTex->GetFileName();
+		//	}
+		//}
+		//else
+		//{
+		//	return "";
+		//}
+	}
+	else
+	{
+		return "";
+	}
+
+	return Str;
+}
+
+void GameEngineFBXMesh::CalAnimationVertexData(FbxMeshSet& _DrawSet)
+{
+	for (auto& _WISet : _DrawSet.MapWI)
+	{
+		std::vector<GameEngineVertex>* Ptr = _DrawSet.FbxVertexMap[_WISet.first];
+
+		if (nullptr == Ptr)
+		{
+			GameEngineDebug::MsgBoxError("버텍스 데이터와 수집한 가중치 데이터가 매칭되지 않습니다.");
+		}
+
+		std::vector<GameEngineVertex>& VertexData = *Ptr;
+
+		for (auto& _WI : _WISet.second)
+		{
+			double dWeight = 0.0;
+			for (int n = 0; n < _WI.second.size(); ++n)
+			{
+				dWeight += _WI.second[n].Weight;
+			}
+
+			for (int n = 0; n < _WI.second.size(); ++n)
+			{
+				_WI.second[n].Weight /= dWeight;
+			}
+
+			if (_WI.second.size() > 4)
+			{
+				std::sort(_WI.second.begin(), _WI.second.end(), [](const FbxExIW& _Left, const FbxExIW& _Right) { return _Left.Weight > _Right.Weight; });
+
+				double dInterPolate = 0.0;
+
+				std::vector<FbxExIW>::iterator IterErase = _WI.second.begin() + 4;
+				for (; IterErase != _WI.second.end(); ++IterErase)
+				{
+					dInterPolate += IterErase->Weight;
+				}
+				IterErase = _WI.second.begin() + 4;
+
+				_WI.second.erase(IterErase, _WI.second.end());
+				_WI.second[0].Weight += dInterPolate;
+			};
+
+			float Weight[4] = { 0.0f };
+			int Index[4] = { 0 };
+
+			for (size_t i = 0; i < _WI.second.size(); i++)
+			{
+				Weight[i] = (float)_WI.second[i].Weight;
+				Index[i] = _WI.second[i].Index;
+			}
+
+			memcpy_s(VertexData[_WI.first].WEIGHT.Arr1D, sizeof(float4), Weight, sizeof(float4));
+			memcpy_s(VertexData[_WI.first].BLENDINDICES, sizeof(float4), Index, sizeof(float4));
+		}
+	}
+}
+
 bool GameEngineFBXMesh::IsBone(fbxsdk::FbxNode* Link)
 {
 	fbxsdk::FbxNodeAttribute* Attr = Link->GetNodeAttribute();
@@ -591,6 +846,42 @@ bool GameEngineFBXMesh::IsNull(fbxsdk::FbxNode* Link)
 		}
 	}
 	return false;
+}
+
+Bone* GameEngineFBXMesh::FindBone(int _Index)
+{
+	if (AllBones.size() <= _Index)
+	{
+		GameEngineDebug::MsgBoxError("본이 존재하지 않습니다.");
+		return nullptr;
+	}
+
+	return &AllBones[_Index];
+}
+
+Bone* GameEngineFBXMesh::FindBone(std::string _Name)
+{
+	if (0 == AllBones.size())
+	{
+		ImportBone();
+	}
+
+	if (0 == AllBones.size())
+	{
+		return nullptr;
+	}
+
+	if (0 == AllFindMap.size())
+	{
+		GameEngineDebug::MsgBoxError("본을 찾는 작업을 하지 않은 매쉬입니다");
+	}
+
+	if (AllFindMap.end() == AllFindMap.find(_Name))
+	{
+		return nullptr;
+	}
+
+	return AllFindMap[_Name];
 }
 
 void GameEngineFBXMesh::RecursiveBuildSkeleton(fbxsdk::FbxNode* Link, std::vector<fbxsdk::FbxNode*>& OutSortedLinks)
@@ -752,18 +1043,18 @@ fbxsdk::FbxNode* GameEngineFBXMesh::GetRootSkeleton(fbxsdk::FbxScene* pScene, fb
 	return RootBone;
 }
 
-void GameEngineFBXMesh::ImportBone()
+bool GameEngineFBXMesh::ImportBone()
 {
 	// 이미 Bone정보를 로드하여 가지고있다면 중복 처리하지않는다.
 	if (0 != AllBones.size())
 	{
-		return;
+		return false;
 	}
 
 	size_t meshCount = MeshInfos.size();
 	if (0 == meshCount)
 	{
-		return;
+		return false;
 	}
 
 	// 스키닝 정보를 가지고있는 것
@@ -803,7 +1094,7 @@ void GameEngineFBXMesh::ImportBone()
 
 	if (0 == ClusterArray.size())
 	{
-		return;
+		return false;
 	}
 
 	SkeletalMeshNode = NodeArray[0];
@@ -1033,4 +1324,35 @@ void GameEngineFBXMesh::ImportBone()
 		JointMatrix.SetGlobalScale(GlobalLinkS);
 		JointMatrix.BuildMatrix();
 	}
+
+	for (size_t i = 0; i < AllBones.size(); i++)
+	{
+		if (AllFindMap.end() == AllFindMap.find(AllBones[i].Name))
+		{
+			AllFindMap.insert(std::make_pair(AllBones[i].Name, &AllBones[i]));
+			continue;
+		}
+
+		std::multimap<std::string, Bone*>::iterator it, itlow, itup;
+
+		itlow = AllFindMap.lower_bound(AllBones[i].Name);  // itlow points to b
+		itup = AllFindMap.upper_bound(AllBones[i].Name);   // itup points to e (not d)
+
+		int Count = 0;
+		for (it = itlow; it != itup; ++it)
+		{
+			++Count;
+		}
+
+		std::string Name = AllBones[i].Name + std::to_string(Count);
+		AllFindMap.insert(std::make_pair(Name, &AllBones[i]));
+	}
+
+	// 
+	AnimationBuffer = new GameEngineStructuredBuffer();
+	AnimationBuffer->Create(sizeof(float4x4), static_cast<UINT>(AllBones.size()), nullptr);
+
+	LoadSkinAndCluster();
+
+	return true;
 }

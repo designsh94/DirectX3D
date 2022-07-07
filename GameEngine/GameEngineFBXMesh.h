@@ -55,7 +55,7 @@ public:
 	bool IsLod;
 
 public:
-	std::map<FbxMesh*, std::vector<GameEngineVertex>*> m_FbxVtxMap;
+	std::map<FbxMesh*, std::vector<GameEngineVertex>*> FbxVertexMap;
 	std::map<FbxMesh*, std::map<int, std::vector<FbxExIW>>> MapWI;
 
 	std::vector<std::vector<GameEngineVertex>> Vertexs;
@@ -63,7 +63,7 @@ public:
 
 	std::vector<GameEngineVertexBuffer*> GameEngineVertexBuffers;
 	std::vector<std::vector<GameEngineIndexBuffer*>> GameEngineIndexBuffers;
-	std::vector<std::vector<FbxExRenderingPipeLineSettingData>> m_MatialData;
+	std::vector<std::vector<FbxExRenderingPipeLineSettingData>> MatialData;
 
 	FbxMeshSet() :
 		IsLod(false),
@@ -394,11 +394,20 @@ struct FbxExMeshInfo
 	}
 };
 
+class FbxClusterData
+{
+public:
+	fbxsdk::FbxCluster* Cluster;
+	fbxsdk::FbxMesh* Mesh;
+	std::string LinkName;
+};
+
 // 분류 : 
 // 용도 : 
 // 설명 : 
 class FBXAnimation;
 class GameEngineFBXAnimation;
+class GameEngineStructuredBuffer;
 class GameEngineFBXMesh : public GameEngineFBX
 {
 	friend FBXAnimation;
@@ -409,6 +418,9 @@ private:
 	std::vector<FbxExMeshInfo> MeshInfos;
 	std::vector<Bone> AllBones;
 	std::map<int, FbxMeshSet> AllMeshMap;
+	std::map<std::string, Bone*> AllFindMap;				// Bone의 이름이 겹치는 경우가 생기므로 이름으로 관리
+	std::map<int, std::vector<FbxClusterData>> ClusterData;	// 
+	GameEngineStructuredBuffer* AnimationBuffer;			// 구조화버퍼 : 애니메이션 
 
 public:
 	GameEngineFBXMesh();
@@ -428,6 +440,11 @@ public:
 		return AllMeshMap;
 	}
 
+	size_t GetBoneCount()
+	{
+		return AllBones.size();
+	}
+
 public:
 	void Load(const std::string& _Path);
 	void MeshLoad();
@@ -442,13 +459,6 @@ private:
 	fbxsdk::FbxAMatrix ComputeTotalMatrix(fbxsdk::FbxNode* Node);
 	bool IsOddNegativeScale(const fbxsdk::FbxAMatrix& TotalMatrix);
 
-	// 기하 컨버트
-	float4x4 FbxMatTofloat4x4(const fbxsdk::FbxAMatrix& _BaseTrans);
-	fbxsdk::FbxAMatrix float4x4ToFbxAMatrix(const float4x4& _MATRIX);
-	float4 FbxVecTofloat4(const fbxsdk::FbxVector4& _BaseVector);
-	float4 FbxVecToTransform(const fbxsdk::FbxVector4& _BaseVector);
-	float4 FbxQuaternionTofloat4(const fbxsdk::FbxQuaternion& _BaseVector);
-
 	// 탄젠트 바이노말 계산
 	void LoadBinormal(fbxsdk::FbxMesh* _Mesh, fbxsdk::FbxAMatrix _MeshMatrix, std::vector<GameEngineVertex>& _ArrVtx, int VtxId, int _Index);
 	void LoadTangent(fbxsdk::FbxMesh* _Mesh, fbxsdk::FbxAMatrix _MeshMatrix, std::vector<GameEngineVertex>& _ArrVtx, int VtxId, int _Index);
@@ -458,10 +468,25 @@ private:
 	void CreateVertexBuffer();
 	void CreateIndexBuffer();
 
+	// 클러스터 데이터를 처리
+	void ImportCluster();
+	void LoadSkinAndCluster();
+	void LoadAnimationVertexData(FbxMeshSet* _DrawData, const std::vector<FbxClusterData>& vecClusterData);
+	void DrawSetWeightAndIndexSetting(FbxMeshSet* _DrawSet, fbxsdk::FbxMesh* _Mesh, fbxsdk::FbxCluster* _Cluster, int _BoneIndex);
+	void CalAnimationVertexData(FbxMeshSet& _DrawSet);
+
+	// 재질관련(텍스처)
+	void FbxMeshSetMaterialSetting(fbxsdk::FbxNode* _Node, FbxMeshSet* _RenderData);
+	float4 MaterialColor(fbxsdk::FbxSurfaceMaterial* pMtrl, const char* _ColorName, const char* _FactorName);
+	float MaterialFactor(fbxsdk::FbxSurfaceMaterial* pMtrl, const char* _FactorName);
+	std::string MaterialTex(fbxsdk::FbxSurfaceMaterial* pMtrl, const char* _FactorName);
+
 public: // 애니메이션관련
 	// Check
 	bool IsBone(fbxsdk::FbxNode* Link);
 	bool IsNull(fbxsdk::FbxNode* Link);
+	Bone* FindBone(int _Index);
+	Bone* FindBone(std::string _Name);
 
 	// 재귀
 	void RecursiveBuildSkeleton(fbxsdk::FbxNode* Link, std::vector<fbxsdk::FbxNode*>& OutSortedLinks);
@@ -472,6 +497,8 @@ public: // 애니메이션관련
 	fbxsdk::FbxNode* GetRootSkeleton(fbxsdk::FbxScene* pScene, fbxsdk::FbxNode* Link);
 
 	// ...
-	void ImportBone();
+	bool ImportBone();
+
+public:
 };
 
