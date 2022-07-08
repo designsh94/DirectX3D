@@ -169,7 +169,7 @@ void GameEngineFBXWindow::OnGUI()
 				// 최초 선택
 				// 즉, 해당 파일의 Mesh 정보를 로드한적이없다고 판단하여 로드한다.
 				SelectMesh = GameEngineFBXMeshManager::GetInst().Load(Files[FBXFileSelect].GetFullPath());
-				SelectMesh->MeshLoad();
+				//SelectMesh->MeshLoad();
 				if (0 != SelectMesh->GetMeshSet().size())
 				{
 					SelectMesh->CreateRenderingBuffer();

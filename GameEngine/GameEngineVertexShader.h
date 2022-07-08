@@ -47,11 +47,13 @@ public:
 	void SetConstantBuffers(const GameEngineConstantBufferSetting* _Setting) override;
 	void SetTexture(const GameEngineTextureSetting* _Setting) override;
 	void SetSampler(const GameEngineSamplerSetting* _Setting) override;
+	void SetStructuredBuffer(const GameEngineStructuredBufferSetting* _Setting) override;
 
 public:
 	void ReSetConstantBuffers(const GameEngineConstantBufferSetting* _Setting) override;
 	void ReSetTexture(const GameEngineTextureSetting* _Setting) override;
 	void ReSetSampler(const GameEngineSamplerSetting* _Setting) override;
+	void ReSetStructuredBuffer(const GameEngineStructuredBufferSetting* _Setting) override;
 	void LayOutReset();
 
 public:

@@ -19,11 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="..\AR38\EngineResources\Shader\AniHeader.fx" />
-    <FxCompile Include="..\AR38\EngineResources\Shader\ColorAni.fx" />
+    <FxCompile Include="EngineResources\Shader\AniHeader.fx" />
     <FxCompile Include="EngineResources\Shader\Blur.fx" />
     <FxCompile Include="EngineResources\Shader\CbufferHeader.fx" />
     <FxCompile Include="EngineResources\Shader\Color.fx" />
+    <FxCompile Include="EngineResources\Shader\ColorAni.fx" />
     <FxCompile Include="EngineResources\Shader\Fade.fx" />
     <FxCompile Include="EngineResources\Shader\LightHeader.fx" />
     <FxCompile Include="EngineResources\Shader\ProgressBar.fx" />

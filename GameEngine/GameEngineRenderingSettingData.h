@@ -3,6 +3,7 @@
 #include "GameEngineConstantBuffer.h"
 #include "GameEngineTexture.h"
 #include "GameEngineSampler.h"
+#include "GameEngineStructuredBuffer.h"
 
 enum class SettingMode
 {
@@ -16,7 +17,7 @@ enum class SettingMode
 // 설명 : 
 class GameEngineShader;
 class GameEngineConstantBuffer;
-class GameEngineConstantBufferSetting
+class GameEngineConstantBufferSetting : public GameEngineObjectNameBase
 {
 public:
 	GameEngineShader* Shader;
@@ -77,7 +78,7 @@ public:
 // 설명 : 
 class GameEngineShader;
 class GameEngineSampler;
-class GameEngineSamplerSetting
+class GameEngineSamplerSetting : public GameEngineObjectNameBase
 {
 public:
 	GameEngineShader* Shader;
@@ -113,7 +114,7 @@ public:
 // 설명 : 
 class GameEngineShader;
 class GameEngineTexture;
-class GameEngineTextureSetting
+class GameEngineTextureSetting : public GameEngineObjectNameBase
 {
 public:
 	GameEngineShader* Shader;
@@ -141,5 +142,43 @@ public:
 	void ShaderReSet()
 	{
 		Shader->ReSetTexture(this);
+	}
+};
+
+class GameEngineShader;
+class GameEngineStructuredBuffer;
+class GameEngineStructuredBufferSetting : public GameEngineObjectNameBase
+{
+public:
+	GameEngineShader* Shader;
+	GameEngineStructuredBuffer* Res_;
+	int SettingIndex_;
+	SettingMode Mode_;
+	const char* SettingData_;
+	char* NewData_;
+	size_t SettingDataSize_;
+
+public:
+	void ShaderSetting()
+	{
+		Shader->SetStructuredBuffer(this);
+	}
+
+	void ShaderReSet()
+	{
+		Shader->ReSetStructuredBuffer(this);
+	}
+
+public:
+	GameEngineStructuredBufferSetting()
+		: Res_(nullptr)
+		, Shader(nullptr)
+		, SettingIndex_(0)
+	{
+
+	}
+
+	~GameEngineStructuredBufferSetting()
+	{
 	}
 };

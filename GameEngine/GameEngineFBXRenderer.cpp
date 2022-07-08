@@ -24,11 +24,26 @@ void FBXAnimation::Init()
 
     // ???
     Animation->CalFbxExBoneFrameTransMatrix(Mesh);
+
+    // 
+    ParentRenderer->BoneData.resize(Mesh->AllBones.size());
+}
+
+void FBXAnimation::Update()
+{
+    // 
+    for (size_t i = 0; i < ParentRenderer->BoneData.size(); i++)
+    {
+        ParentRenderer->BoneData[i].Identity();
+    }
+
+    // 
 }
 
 //---------------------------------------------------- FBX Renderer ---------------------------------------------------//
 GameEngineFBXRenderer::GameEngineFBXRenderer() :
-    FBXMesh(nullptr)
+    FBXMesh(nullptr),
+    CurAnimation(nullptr)
 {
 }
 
@@ -90,6 +105,12 @@ void GameEngineFBXRenderer::SetFBXMesh(const std::string& _Value, std::string _P
                     RenderSetData.ShaderHelper->SettingConstantBufferLink("LightsData", LightData);
                 }
 
+                if (true == RenderSetData.ShaderHelper->IsStructuredBuffer("ArrAniMationMatrix"))
+                {
+                    const LightsData& LightData = GetLevel()->GetMainCamera()->GetLightData();
+                    RenderSetData.ShaderHelper->SettingStructuredBuffer("ArrAniMationMatrix", FBXMesh->GetAnimationBuffer());
+                }
+
                 RenderSetData.PipeLine_->SetInputAssembler1VertexBufferSetting(VertexBuffer);
                 RenderSetData.PipeLine_->SetInputAssembler2IndexBufferSetting(IndexBuffer);
             }
@@ -104,6 +125,11 @@ void GameEngineFBXRenderer::Start()
 
 void GameEngineFBXRenderer::Render(float _DeltaTime)
 {
+    if (nullptr != CurAnimation)
+    {
+        CurAnimation->Update();
+    }
+
     for (size_t i = 0; i < RenderSets.size(); i++)
     {
         RenderSets[i].ShaderHelper->Setting();
@@ -139,6 +165,7 @@ void GameEngineFBXRenderer::CreateFBXAnimation(const std::string& _AnimationName
     FBXAnimation* NewFBXAnimation = new FBXAnimation();
     NewFBXAnimation->Mesh = FBXMesh;
     NewFBXAnimation->Animation = Animation;
+    NewFBXAnimation->ParentRenderer = this;
     NewFBXAnimation->Init();
 
     Animations.insert(std::make_pair(_AnimationName, NewFBXAnimation));
@@ -146,5 +173,12 @@ void GameEngineFBXRenderer::CreateFBXAnimation(const std::string& _AnimationName
 
 void GameEngineFBXRenderer::ChangeFBXAnimation(const std::string& _AnimationName)
 {
+    std::map<std::string, FBXAnimation*>::iterator FindIter = Animations.find(_AnimationName);
+    if (Animations.end() == FindIter)
+    {
+        GameEngineDebug::MsgBoxError("존재하지 않는 애니메이션으로 체인지 하려고 했습니다.");
+        return;
+    }
 
+    CurAnimation = FindIter->second;
 }

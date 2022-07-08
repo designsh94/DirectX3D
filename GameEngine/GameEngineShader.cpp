@@ -84,44 +84,74 @@ void GameEngineShader::ResCheck()
 					return;
 				}
 
-				ConstanceBuffers_.insert(std::make_pair(ResInfo.BindPoint, NewBuffer));
+				GameEngineConstantBufferSetting Setting;
+				Setting.SetName(Name);
+				Setting.SettingIndex_ = ResInfo.BindPoint;
+				Setting.Res_ = NewBuffer;
+
+				ConstantBuffers_.insert(std::make_pair(Name, Setting));
 				break;
 			}
 			case D3D_SIT_SAMPLER:
 			{
-				D3D11_SAMPLER_DESC Smp_Decs = {};
-				memset(&Smp_Decs, 0, sizeof(D3D11_SAMPLER_DESC));
-
-				std::string CheckName = GameEngineString::toupper(Name);
-
-				Smp_Decs.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-
-				if (std::string::npos != CheckName.find("POINT"))
+				if (nullptr == GameEngineSamplerManager::GetInst().Find(Name))
 				{
-					Smp_Decs.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
-				}
-				else if (std::string::npos != CheckName.find("LINEAR"))
-				{
+					D3D11_SAMPLER_DESC Smp_Decs = {};
+					memset(&Smp_Decs, 0, sizeof(D3D11_SAMPLER_DESC));
+
+					std::string CheckName = GameEngineString::toupper(Name);
+
 					Smp_Decs.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+
+					if (std::string::npos != CheckName.find("POINT"))
+					{
+						Smp_Decs.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+					}
+					else if (std::string::npos != CheckName.find("LINEAR"))
+					{
+						Smp_Decs.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+					}
+
+					Smp_Decs.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+					Smp_Decs.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+					Smp_Decs.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+
+					Smp_Decs.MipLODBias = 0.0f;
+					Smp_Decs.MaxAnisotropy = 1;
+					Smp_Decs.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+					Smp_Decs.MinLOD = -FLT_MAX;
+					Smp_Decs.MaxLOD = FLT_MAX;
+					GameEngineSamplerManager::GetInst().Create(Name, Smp_Decs);
 				}
 
-				Smp_Decs.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-				Smp_Decs.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-				Smp_Decs.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+				GameEngineSampler* NewRes = GameEngineSamplerManager::GetInst().Find(Name);
 
-				Smp_Decs.MipLODBias = 0.0f;
-				Smp_Decs.MaxAnisotropy = 1;
-				Smp_Decs.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-				Smp_Decs.MinLOD = -FLT_MAX;
-				Smp_Decs.MaxLOD = FLT_MAX;
+				GameEngineSamplerSetting Setting;
+				Setting.SetName(Name);
+				Setting.SettingIndex_ = ResInfo.BindPoint;
+				Setting.Res_ = NewRes;
 
-				GameEngineSampler* NewRes = GameEngineSamplerManager::GetInst().CreateAndFind(Name, Smp_Decs);
-				Samplers_.insert(std::make_pair(ResInfo.BindPoint, NewRes));
+				Samplers_.insert(std::make_pair(Name, Setting));
 				break;
 			}
 			case D3D_SIT_TEXTURE:
 			{
-				Textures_.insert(std::make_pair(ResInfo.BindPoint, Name));
+				GameEngineTextureSetting Setting;
+				Setting.SetName(Name);
+				Setting.SettingIndex_ = ResInfo.BindPoint;
+				Setting.Res_ = GameEngineTextureManager::GetInst().Find("NotSettingError.png");
+
+				Textures_.insert(std::make_pair(Name, Setting));
+				break;
+			}
+			case D3D_SIT_STRUCTURED:
+			{
+				GameEngineStructuredBufferSetting Setting;
+				Setting.SetName(Name);
+				Setting.SettingIndex_ = ResInfo.BindPoint;
+				Setting.Res_ = nullptr;
+
+				StructuredBuffers_.insert(std::make_pair(Name, Setting));
 				break;
 			}
 			default:

@@ -24,8 +24,13 @@ void GameEngineFBXMesh::Load(const std::string& _Path)
 		return;
 	}
 
+	// 변환
 	FBXConvertScene();
+
+	// 정점데이터 수집
 	MeshLoad();
+
+	// 본정보 수집
 	ImportBone();
 }
 
@@ -1125,6 +1130,7 @@ bool GameEngineFBXMesh::ImportBone()
 		}
 	}
 
+	// 
 	BuildSkeletonSystem(Scene, ClusterArray, SortedLinks);
 
 	if (SortedLinks.size() == 0)

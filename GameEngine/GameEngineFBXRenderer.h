@@ -11,6 +11,7 @@ public:
 };
 
 // 설명 : 
+class GameEngineFBXRenderer;
 class GameEngineFBXMesh;
 class GameEngineFBXAnimation;
 class FBXAnimation
@@ -18,9 +19,11 @@ class FBXAnimation
 public:
 	GameEngineFBXMesh* Mesh;
 	GameEngineFBXAnimation* Animation;
+	GameEngineFBXRenderer* ParentRenderer;
 
 public:
 	void Init();
+	void Update();
 };
 
 // 설명 : 하나의 랜더 단위를 표현
@@ -31,7 +34,7 @@ class GameEngineVertexBuffer;
 class GameEngineRenderingPipeLine;
 class GameEngineFBXRenderer : public GameEngineRendererBase
 {
-private:
+	friend FBXAnimation;
 	friend GameEngineLevel;
 	friend CameraComponent;
 
@@ -40,6 +43,8 @@ private:
 	std::vector<RenderSet> RenderSets;
 
 private: // 애니메이션관련
+	FBXAnimation* CurAnimation;
+	std::vector<float4x4> BoneData;
 	std::map<std::string, FBXAnimation*> Animations;
 
 public:

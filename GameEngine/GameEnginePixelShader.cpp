@@ -31,6 +31,11 @@ void GameEnginePixelShader::SetSampler(const GameEngineSamplerSetting* _Setting)
 	GameEngineDevice::GetContext()->PSSetSamplers(_Setting->SettingIndex_, 1, _Setting->Res_->GetSamplerState());
 }
 
+void GameEnginePixelShader::SetStructuredBuffer(const GameEngineStructuredBufferSetting* _Setting)
+{
+	GameEngineDevice::GetContext()->PSSetShaderResources(_Setting->SettingIndex_, 1, _Setting->Res_->GetShaderResourcesView());
+}
+
 void GameEnginePixelShader::ReSetConstantBuffers(const GameEngineConstantBufferSetting* _Setting)
 {
 	static ID3D11Buffer* const ReSetting[1] = { nullptr };
@@ -49,6 +54,13 @@ void GameEnginePixelShader::ReSetSampler(const GameEngineSamplerSetting* _Settin
 	static ID3D11SamplerState* const ReSetting[1] = { nullptr };
 
 	GameEngineDevice::GetContext()->PSSetSamplers(_Setting->SettingIndex_, 1, ReSetting);
+}
+
+void GameEnginePixelShader::ReSetStructuredBuffer(const GameEngineStructuredBufferSetting* _Setting)
+{
+	static ID3D11ShaderResourceView* ReSetting[1] = { nullptr };
+
+	GameEngineDevice::GetContext()->PSSetShaderResources(_Setting->SettingIndex_, 1, ReSetting);
 }
 
 bool GameEnginePixelShader::Create(const std::string& _ShaderCode, const std::string& _EntryPoint, UINT _VersionHigh, UINT _VersionLow)

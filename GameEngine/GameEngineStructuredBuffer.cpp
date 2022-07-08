@@ -1,7 +1,14 @@
 #include "PreCompile.h"
 #include "GameEngineStructuredBuffer.h"
 
-GameEngineStructuredBuffer::GameEngineStructuredBuffer() 
+GameEngineStructuredBuffer::GameEngineStructuredBuffer() :
+	Buffer(nullptr),
+	BufferData{},
+	ResData{},
+	BufferDesc{},
+	SRV(nullptr),
+	DataSize(0),
+	DataCount(0)
 {
 }
 
@@ -13,67 +20,53 @@ GameEngineStructuredBuffer::~GameEngineStructuredBuffer()
 		SRV = nullptr;
 	}
 
-	if (nullptr != Buffer_)
+	if (nullptr != Buffer)
 	{
-		Buffer_->Release();
-		Buffer_ = nullptr;
+		Buffer->Release();
+		Buffer = nullptr;
 	}
 }
 
 void GameEngineStructuredBuffer::ChangeData(const void* _Data, size_t _Size)
 {
-	// 512 라이트 데이터를 세팅해줄수 있는 버퍼를 만들었다고 하더라도
-// 진짜 512개의 라이트를 세팅하는것은 아닐수가 있으므로
-// 기존에 만든 세팅들이 사이드 이펙트가 생기지는 않겠지만
-// 위험하니까 고려는 해둬야 할겁니다.
-
-// 여기에서 실제 데이터를 세팅해주게 되는데.
 #ifdef _DEBUG
-	//if (m_BufferInfo.ByteWidth != _Size)
-	//{
-	//	GameEngineDebug::AssertMsg("if (m_BufferInfo.ByteWidth != _Size)");
-	//}
-	ResData_.pData = nullptr;
+	ResData.pData = nullptr;
 #endif
-	GameEngineDevice::GetContext()->Map(Buffer_, 0, D3D11_MAP_WRITE_DISCARD, 0, &ResData_);
+
+	GameEngineDevice::GetContext()->Map(Buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &ResData);
 
 #ifdef _DEBUG
-	if (nullptr == ResData_.pData)
+	if (nullptr == ResData.pData)
 	{
 		GameEngineDebug::MsgBoxError("if (nullptr == m_Res.pData)");
 	}
 #endif 
+	memcpy_s(ResData.pData, BufferData.ByteWidth, _Data, _Size);
 
-	memcpy_s(ResData_.pData, BufferData_.ByteWidth, _Data, _Size);
-
-	GameEngineDevice::GetContext()->Unmap(Buffer_, 0);
+	GameEngineDevice::GetContext()->Unmap(Buffer, 0);
 }
-
 
 void GameEngineStructuredBuffer::Create(UINT _DataSize, UINT _DataCount, void* _StartData) 
 {
 	DataSize = _DataSize;
 	DataCount = _DataCount;
 
-	BufferData_.ByteWidth = DataSize * DataCount; // GPU 에 생성할 구조화 버퍼 메모리 크기(최소단위 ??)
-	BufferData_.Usage = D3D11_USAGE_DYNAMIC;
-	BufferData_.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	BufferData_.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	BufferData_.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-	BufferData_.StructureByteStride = DataSize; // 48 크기의 구조체
+	BufferData.ByteWidth = DataSize * DataCount; // GPU 에 생성할 구조화 버퍼 메모리 크기(최소단위 ??)
+	BufferData.Usage = D3D11_USAGE_DYNAMIC;
+	BufferData.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	BufferData.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	BufferData.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+	BufferData.StructureByteStride = DataSize; // 48 크기의 구조체
 
-	D3D11_SUBRESOURCE_DATA StartData;
-
-
+	D3D11_SUBRESOURCE_DATA StartData = {};
 	D3D11_SUBRESOURCE_DATA* StartDataPtr = nullptr;
-
 	if (nullptr != _StartData)
 	{
+		StartDataPtr = &StartData;
 		StartData.pSysMem = _StartData;
 	}
 
-
-	if (S_OK != GameEngineDevice::GetDevice()->CreateBuffer(&BufferData_, StartDataPtr, &Buffer_))
+	if (S_OK != GameEngineDevice::GetDevice()->CreateBuffer(&BufferData, StartDataPtr, &Buffer))
 	{
 		GameEngineDebug::MsgBoxError("스트럭처드 버퍼 생성에 실패했습니다.");
 

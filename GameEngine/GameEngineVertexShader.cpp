@@ -353,6 +353,11 @@ void GameEngineVertexShader::SetSampler(const GameEngineSamplerSetting* _Setting
 	GameEngineDevice::GetContext()->VSSetSamplers(_Setting->SettingIndex_, 1, _Setting->Res_->GetSamplerState());
 }
 
+void GameEngineVertexShader::SetStructuredBuffer(const GameEngineStructuredBufferSetting* _Setting)
+{
+	GameEngineDevice::GetContext()->VSSetShaderResources(_Setting->SettingIndex_, 1, _Setting->Res_->GetShaderResourcesView());
+}
+
 void GameEngineVertexShader::ReSetConstantBuffers(const GameEngineConstantBufferSetting* _Setting)
 {
 	static ID3D11Buffer* const ReSetting[16] = { nullptr };
@@ -369,6 +374,12 @@ void GameEngineVertexShader::ReSetSampler(const GameEngineSamplerSetting* _Setti
 {
 	static ID3D11SamplerState* const ReSetting[16] = { nullptr };
 	GameEngineDevice::GetContext()->VSSetSamplers(_Setting->SettingIndex_, 1, ReSetting);
+}
+
+void GameEngineVertexShader::ReSetStructuredBuffer(const GameEngineStructuredBufferSetting* _Setting)
+{
+	static ID3D11ShaderResourceView* ReSetting[16] = { nullptr };
+	GameEngineDevice::GetContext()->VSSetShaderResources(_Setting->SettingIndex_, 1, ReSetting);
 }
 
 void GameEngineVertexShader::LayOutReset()

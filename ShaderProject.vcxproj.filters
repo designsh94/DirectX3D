@@ -39,10 +39,10 @@
     <FxCompile Include="EngineResources\Shader\TileMap.fx">
       <Filter>Engine</Filter>
     </FxCompile>
-    <FxCompile Include="..\AR38\EngineResources\Shader\AniHeader.fx">
+    <FxCompile Include="EngineResources\Shader\AniHeader.fx">
       <Filter>Engine</Filter>
     </FxCompile>
-    <FxCompile Include="..\AR38\EngineResources\Shader\ColorAni.fx">
+    <FxCompile Include="EngineResources\Shader\ColorAni.fx">
       <Filter>Engine</Filter>
     </FxCompile>
   </ItemGroup>

@@ -9,6 +9,7 @@ class GameEngineRenderingPipeLine;
 class GameEngineTexture;
 class GameEngineSampler;
 class GameEngineConstantBuffer;
+class GameEngineStructuredBuffer;
 class CameraComponent;
 class GameEngineRenderer;
 class GameEngineShaderResHelper
@@ -17,13 +18,17 @@ class GameEngineShaderResHelper
 	friend GameEngineRenderer;
 
 private:
-	std::map<std::string, GameEngineConstantBufferSetting*> AllConstantBufferData_;
-	std::map<std::string, GameEngineTextureSetting*> AllTextureData_;
-	std::map<std::string, GameEngineSamplerSetting*> AllSamplerData_;
+	std::map<std::string, GameEngineConstantBufferSetting> AllConstantBufferData_;
+	std::map<std::string, GameEngineTextureSetting> AllTextureData_;
+	std::map<std::string, GameEngineSamplerSetting> AllSamplerData_;
+	std::map<std::string, GameEngineStructuredBufferSetting> AllStructuredBufferData_;
 
 public:
 	GameEngineShaderResHelper();
 	~GameEngineShaderResHelper();
+
+private:
+	void Clear();
 
 public:
 	template<typename T>
@@ -31,19 +36,17 @@ public:
 	{
 		std::string UpperName = GameEngineString::toupper(_SettingName);
 
-		std::map<std::string, GameEngineConstantBufferSetting*>::iterator FindIter = AllConstantBufferData_.find(UpperName);
-
+		std::map<std::string, GameEngineConstantBufferSetting>::iterator FindIter = AllConstantBufferData_.find(UpperName);
 		if (FindIter == AllConstantBufferData_.end())
 		{
 			GameEngineDebug::MsgBoxError("존재하지 않는 상수버퍼를 세팅하려고 했습니다." + UpperName);
 			return;
 		}
 
-		GameEngineConstantBufferSetting* SettingData = FindIter->second;
-
-		SettingData->Mode_ = SettingMode::Link;
-		SettingData->SettingDataSize_ = sizeof(_Data);
-		SettingData->SettingData_ = reinterpret_cast<const char*>(&_Data);
+		GameEngineConstantBufferSetting& SettingData = FindIter->second;
+		SettingData.Mode_ = SettingMode::Link;
+		SettingData.SettingDataSize_ = sizeof(_Data);
+		SettingData.SettingData_ = reinterpret_cast<const char*>(&_Data);
 	}
 
 	template<typename T>
@@ -51,32 +54,39 @@ public:
 	{
 		std::string UpperName = GameEngineString::toupper(_SettingName);
 
-
-		std::map<std::string, GameEngineConstantBufferSetting*>::iterator FindIter = AllConstantBufferData_.find(UpperName);
-
+		std::map<std::string, GameEngineConstantBufferSetting>::iterator FindIter = AllConstantBufferData_.find(UpperName);
 		if (FindIter == AllConstantBufferData_.end())
 		{
 			GameEngineDebug::MsgBoxError("존재하지 않는 상수버퍼를 세팅하려고 했습니다." + UpperName);
 			return;
 		}
 
-		GameEngineConstantBufferSetting* SettingData = FindIter->second;
-		SettingData->Mode_ = SettingMode::Set;
-		SettingData->SettingDataSize_ = sizeof(_Data);
-
-		if (nullptr == SettingData->NewData_)
+		GameEngineConstantBufferSetting& SettingData = FindIter->second;
+		SettingData.Mode_ = SettingMode::Set;
+		SettingData.SettingDataSize_ = sizeof(_Data);
+		if (nullptr == SettingData.NewData_)
 		{
-			SettingData->NewData_ = new char[sizeof(_Data)];
+			SettingData.NewData_ = new char[sizeof(_Data)];
 		}
 
-		memcpy_s(SettingData->NewData_, sizeof(_Data), &_Data, sizeof(_Data));
-		SettingData->SettingData_ = SettingData->NewData_;
+		memcpy_s(SettingData.NewData_, sizeof(_Data), &_Data, sizeof(_Data));
+		SettingData.SettingData_ = SettingData.NewData_;
+	}
+
+public:
+	template<typename T>
+	void SettingStructuredBufferLink(const std::string& _SettingName, const T& _Data)
+	{
+
 	}
 
 public:
 	void ShaderResourcesCheck(GameEngineRenderingPipeLine* _Shader);
 	void ShaderResourcesCheck(GameEngineShader* _Shader);
+
+public:
 	bool IsConstantBuffer(const std::string& _SettingName);
+	bool IsStructuredBuffer(const std::string& _SettingName);
 
 public:
 	void SettingTexture(const std::string& _SettingName, const std::string& _ImageName);
@@ -87,11 +97,11 @@ public:
 	void SettingSampler(const std::string& _SettingName, GameEngineSampler* _Value);
 
 public:
-	void ReSet();
-	void Setting();
+	void SettingStructuredBuffer(const std::string& _SettingName, GameEngineStructuredBuffer* _Buffer);
 
-private:
-	void Clear();
+public:
+	void Setting();
+	void ReSet();
 
 public:
 };

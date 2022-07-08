@@ -90,7 +90,7 @@ std::vector<GameEngineFile> GameEngineDirectory::GetAllFile(const std::string& _
 
 	Filter += _filter;
 
-	GameEngineString::toupper(Filter);
+	Filter = GameEngineString::toupper(Filter);
 
 	std::vector<GameEngineFile> Return;
 
@@ -104,7 +104,7 @@ std::vector<GameEngineFile> GameEngineDirectory::GetAllFile(const std::string& _
 		}
 		
 		std::string Ext = File.path().extension().string();
-		GameEngineString::toupper(Ext);
+		Ext = GameEngineString::toupper(Ext);
 
 		if (_filter != "*" && Filter != Ext)
 		{

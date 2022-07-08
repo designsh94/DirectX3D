@@ -445,6 +445,11 @@ public:
 		return AllBones.size();
 	}
 
+	GameEngineStructuredBuffer* GetAnimationBuffer()
+	{
+		return AnimationBuffer;
+	}
+
 public:
 	void Load(const std::string& _Path);
 	void MeshLoad();
