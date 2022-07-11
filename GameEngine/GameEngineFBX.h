@@ -23,7 +23,7 @@
 //		  3) fbxsdk::FbxManager를 이용하여 FBX File Load 형식을 정의하는 fbxsdk::FbxIOSettings 생성(IOSROOT)
 //		  4) fbxsdk::FbxManager를 이용하여 fbxsdk::FbxImporter 생성
 //		  5) fbxsdk::FbxImporter를 초기화 -> FBX File이 있는 경로+파일명을 전달
-//		  6) FBX File Load를 위한 준비완료 -> Import를 소멸시키게되면 메모리소모를 줄일수있음
+//		  6) FBX File Load를 위한 준비완료 -> 파일 로드가 완료되었으므로 fbxsdk::FbxImporter를 소멸시키게되면 메모리 소모를 줄일수있음
 //		  7) 
 class GameEngineFBX : public GameEngineObjectNameBase
 {
@@ -35,9 +35,9 @@ protected: // FBX File Load 준비를 위한 객체 생성 및 Scene Get
 
 protected:
 	fbxsdk::FbxNode* RootNode;					// 해당 FBX File의 Scene을 구성하는 최상위노드(루트노드)
-	fbxsdk::FbxAMatrix ConvertMatrix;			// 
-	fbxsdk::FbxAMatrix JointMatrix;				// 
-	fbxsdk::FbxVector4 AxisVector;				// 
+	fbxsdk::FbxAMatrix ConvertMatrix;			// 축 변환 행렬
+	fbxsdk::FbxAMatrix JointMatrix;				// 쿼터니언
+	fbxsdk::FbxVector4 AxisVector;				// 축정보
 
 public:
 	GameEngineFBX();
