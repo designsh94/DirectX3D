@@ -501,7 +501,7 @@ public: // 애니메이션관련
 	void BuildSkeletonSystem(fbxsdk::FbxScene* pScene, std::vector<fbxsdk::FbxCluster*>& ClusterArray, std::vector<fbxsdk::FbxNode*>& OutSortedLinks);
 	fbxsdk::FbxNode* GetRootSkeleton(fbxsdk::FbxScene* pScene, fbxsdk::FbxNode* Link);
 
-	// ...
+	// 본(Bone)정보 수집
 	bool ImportBone();
 
 public:

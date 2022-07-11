@@ -27,7 +27,7 @@ protected:
 	fbxsdk::FbxScene* Scene;
 	fbxsdk::FbxNode* RootNode;
 	fbxsdk::FbxAMatrix ConvertMatrix;
-	fbxsdk::FbxAMatrix JointConvertMatrix;
+	fbxsdk::FbxAMatrix JointMatrix;
 	fbxsdk::FbxVector4 AxisVector;
 
 public:

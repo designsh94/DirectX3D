@@ -4,10 +4,12 @@
 // 분류 : 
 // 용도 : 
 // 설명 : 
+class GameEngineFBXWindow;
 class MouseActor;
 class FBXLevel : public GameEngineLevel
 {
 private:	// member Var
+	GameEngineFBXWindow* ImageWindow;
 	MouseActor* Mouse_;
 
 public:

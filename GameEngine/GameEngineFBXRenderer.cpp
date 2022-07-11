@@ -19,25 +19,63 @@
 //--------------------------------------------------- FBX Animation ---------------------------------------------------//
 void FBXAnimation::Init()
 {
-    // Bone Infomation Setting
-    Mesh->ImportBone();
-
-    // ???
     Animation->CalFbxExBoneFrameTransMatrix(Mesh);
-
-    // 
-    ParentRenderer->BoneData.resize(Mesh->AllBones.size());
+    PixAniData = &Animation->AnimationDatas[0];
+    Start = 0;
+    End = static_cast<UINT>(PixAniData->AniFrameData[0].BoneMatData.size());
+    FrameTime = 0.1f;
 }
 
-void FBXAnimation::Update()
+void FBXAnimation::Update(float _DeltaTime)
 {
-    // 
-    for (size_t i = 0; i < ParentRenderer->BoneData.size(); i++)
+    CurFrameTime += _DeltaTime;
+    if (CurFrameTime >= FrameTime)
     {
-        ParentRenderer->BoneData[i].Identity();
+        CurFrameTime -= FrameTime;
+        ++CurFrame;
     }
 
-    // 
+    if (CurFrame >= End)
+    {
+        CurFrame = Start;
+    }
+
+    int NextFrame = CurFrame;
+    ++NextFrame;
+    if (NextFrame >= static_cast<int>(End))
+    {
+        NextFrame = 0;
+    }
+
+    for (int i = 0; i < ParentRenderer->BoneData.size(); i++)
+    {
+        Bone* BoneData = ParentRenderer->FBXMesh->FindBone(i);
+
+        if (true == PixAniData->AniFrameData[i].BoneMatData.empty())
+        {
+            ParentRenderer->BoneData[i] = float4x4::Affine(BoneData->BonePos.GlobalScale, BoneData->BonePos.GlobalRotation, BoneData->BonePos.GlobalTranslation);
+            return;
+        }
+
+        // 현재프레임과 
+        FbxExBoneFrameData& CurData = PixAniData->AniFrameData[i].BoneMatData[CurFrame];
+
+        // 다음프레임의 정보가 필요한데
+        FbxExBoneFrameData& NextData = PixAniData->AniFrameData[i].BoneMatData[NextFrame];
+
+        // 로컬 스케일
+        float4 LerpScale = float4::Lerp(CurData.S, NextData.S, CurFrameTime);
+
+        // 로컬 쿼터니온
+        float4 SLerpQ = float4::SLerp(CurData.Q, NextData.Q, CurFrameTime);
+
+        // 로컬 포지션
+        float4 LerpPos = float4::Lerp(CurData.T, NextData.T, CurFrameTime);
+
+        size_t Size = sizeof(float4x4);
+        float4x4 Mat = float4x4::Affine(LerpScale, SLerpQ, LerpPos);
+        ParentRenderer->BoneData[i] = BoneData->BonePos.Offset * float4x4::Affine(LerpScale, SLerpQ, LerpPos);
+    }
 }
 
 //---------------------------------------------------- FBX Renderer ---------------------------------------------------//
@@ -65,6 +103,10 @@ GameEngineFBXRenderer::~GameEngineFBXRenderer()
 
 void GameEngineFBXRenderer::Update(float _DeltaTime)
 {
+    if (nullptr != CurAnimation)
+    {
+        CurAnimation->Update(_DeltaTime);
+    }
 }
 
 void GameEngineFBXRenderer::SetFBXMesh(const std::string& _Value, std::string _PipeLine)
@@ -107,8 +149,15 @@ void GameEngineFBXRenderer::SetFBXMesh(const std::string& _Value, std::string _P
 
                 if (true == RenderSetData.ShaderHelper->IsStructuredBuffer("ArrAniMationMatrix"))
                 {
+                    FBXMesh->ImportBone();
+                    if (0 == BoneData.size())
+                    {
+                        BoneData.resize(FBXMesh->GetBoneCount());
+                    }
+
                     const LightsData& LightData = GetLevel()->GetMainCamera()->GetLightData();
                     RenderSetData.ShaderHelper->SettingStructuredBuffer("ArrAniMationMatrix", FBXMesh->GetAnimationBuffer());
+                    RenderSetData.ShaderHelper->SettingStructuredBufferLink("ArrAniMationMatrix", &BoneData[0], sizeof(float4x4) * BoneData.size());
                 }
 
                 RenderSetData.PipeLine_->SetInputAssembler1VertexBufferSetting(VertexBuffer);
@@ -125,11 +174,6 @@ void GameEngineFBXRenderer::Start()
 
 void GameEngineFBXRenderer::Render(float _DeltaTime)
 {
-    if (nullptr != CurAnimation)
-    {
-        CurAnimation->Update();
-    }
-
     for (size_t i = 0; i < RenderSets.size(); i++)
     {
         RenderSets[i].ShaderHelper->Setting();

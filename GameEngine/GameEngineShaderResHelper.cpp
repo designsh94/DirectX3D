@@ -230,6 +230,12 @@ void GameEngineShaderResHelper::Setting()
 	{
 		Setting.second.ShaderSetting();
 	}
+
+	for (auto& Setting : AllStructuredBufferData_)
+	{
+		Setting.second.ChangeData();
+		Setting.second.ShaderSetting();
+	}
 }
 
 void GameEngineShaderResHelper::ReSet()

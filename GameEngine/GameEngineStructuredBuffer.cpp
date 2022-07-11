@@ -41,6 +41,9 @@ void GameEngineStructuredBuffer::ChangeData(const void* _Data, size_t _Size)
 		GameEngineDebug::MsgBoxError("if (nullptr == m_Res.pData)");
 	}
 #endif 
+
+	const float4x4* Ptr = reinterpret_cast<const float4x4*>(_Data);
+
 	memcpy_s(ResData.pData, BufferData.ByteWidth, _Data, _Size);
 
 	GameEngineDevice::GetContext()->Unmap(Buffer, 0);

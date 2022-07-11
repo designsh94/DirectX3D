@@ -11,6 +11,7 @@ public:
 };
 
 // 설명 : 
+class FbxExAniData;
 class GameEngineFBXRenderer;
 class GameEngineFBXMesh;
 class GameEngineFBXAnimation;
@@ -20,10 +21,18 @@ public:
 	GameEngineFBXMesh* Mesh;
 	GameEngineFBXAnimation* Animation;
 	GameEngineFBXRenderer* ParentRenderer;
+	FbxExAniData* PixAniData;
+
+public:
+	float CurFrameTime;
+	float FrameTime;
+	UINT CurFrame;
+	UINT End;
+	UINT Start;
 
 public:
 	void Init();
-	void Update();
+	void Update(float _DeltaTime);
 };
 
 // 설명 : 하나의 랜더 단위를 표현

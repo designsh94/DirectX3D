@@ -53,7 +53,7 @@ void FBXLevel::CreateActorLevel()
 void FBXLevel::LevelStart()
 {
 	// Create FBX Window & FBX Files Path Set
-	GameEngineFBXWindow* ImageWindow = GameEngineGUI::GetInst()->CreateGUIWindow<GameEngineFBXWindow>("FBXWindow");
+	ImageWindow = GameEngineGUI::GetInst()->CreateGUIWindow<GameEngineFBXWindow>("FBXWindow");
 	ImageWindow->FBXFilePath.MoveParent("DirectX3D");
 	ImageWindow->FBXFilePath.MoveChild("EngineResources");
 	ImageWindow->FBXFilePath.MoveChild("FBX");
@@ -101,4 +101,5 @@ void FBXLevel::LevelChangeEndEvent(GameEngineLevel* _NextLevel)
 
 void FBXLevel::LevelChangeStartEvent(GameEngineLevel* _PrevLevel)
 {
+	ImageWindow->TestInit();
 }

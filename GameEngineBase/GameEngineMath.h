@@ -142,6 +142,26 @@ public:
 
 	static float4 DirZRadian(float _Radian);
 
+	// Lerp(선형보간)
+	static float4 Lerp(const float4& _Left, const float4& _Right, float _Ratio)
+	{
+		if (1.0f <= _Ratio)
+		{
+			_Ratio = 1.0f;
+		}
+		return DirectX::XMVectorLerp(_Left.DirectVector, _Right.DirectVector, _Ratio);
+	}
+
+	// SLerp(구형보간)
+	static float4 SLerp(const float4& _Left, const float4& _Right, float _Ratio)
+	{
+		if (1.0f <= _Ratio)
+		{
+			_Ratio = 1.0f;
+		}
+		return DirectX::XMQuaternionSlerp(_Left.DirectVector, _Right.DirectVector, _Ratio);
+	}
+
 public:
 	union
 	{
@@ -566,6 +586,12 @@ public:
 	static float4x4 Transformation(float4 _Scale, float4 _RotQ, float4 _Pos)
 	{
 		return DirectX::XMMatrixTransformation(float4::ZERO.DirectVector, float4::ZERO.DirectVector, _Scale.DirectVector, float4::ZERO.DirectVector, _RotQ.DirectVector, _Pos.DirectVector);
+	}
+
+	// 월드행렬 생성
+	static float4x4 Affine(float4 _Scale, float4 _Rot, float4 _Pos)
+	{
+		return DirectX::XMMatrixAffineTransformation(_Scale.DirectVector, float4::ZERO.DirectVector, _Rot.DirectVector, _Pos.DirectVector);
 	}
 
 public:

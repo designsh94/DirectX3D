@@ -381,7 +381,7 @@ void GameEngineFBXMesh::VertexBufferCheck()
 
 		if (false == meshInfo.bIsSkelMesh)
 		{
-			meshMatrix = JointConvertMatrix * meshMatrix;
+			meshMatrix = JointMatrix * meshMatrix;
 		}
 
 		// 크기가 -인게 있는지 확인
@@ -1294,21 +1294,21 @@ bool GameEngineFBXMesh::ImportBone()
 
 		Bone.Name = Link->GetName();
 
-		JointPos& JointMatrix = Bone.BonePos;
+		JointPos& BonePosData = Bone.BonePos;
 		fbxsdk::FbxSkeleton* Skeleton = Link->GetSkeleton();
 		if (Skeleton)
 		{
-			JointMatrix.Length = (float)Skeleton->LimbLength.Get();
-			JointMatrix.XSize = (float)Skeleton->Size.Get();
-			JointMatrix.YSize = (float)Skeleton->Size.Get();
-			JointMatrix.ZSize = (float)Skeleton->Size.Get();
+			BonePosData.Length = (float)Skeleton->LimbLength.Get();
+			BonePosData.XSize = (float)Skeleton->Size.Get();
+			BonePosData.YSize = (float)Skeleton->Size.Get();
+			BonePosData.ZSize = (float)Skeleton->Size.Get();
 		}
 		else
 		{
-			JointMatrix.Length = 1.;
-			JointMatrix.XSize = 100.;
-			JointMatrix.YSize = 100.;
-			JointMatrix.ZSize = 100.;
+			BonePosData.Length = 1.;
+			BonePosData.XSize = 100.;
+			BonePosData.YSize = 100.;
+			BonePosData.ZSize = 100.;
 		}
 
 		Bone.ParentIndex = ParentIndex;
@@ -1322,13 +1322,13 @@ bool GameEngineFBXMesh::ImportBone()
 			}
 		}
 
-		JointMatrix.SetTranslation(LocalLinkT);
-		JointMatrix.SetRotation(LocalLinkQ);
-		JointMatrix.SetScale(LocalLinkS);
-		JointMatrix.SetGlobalTranslation(GlobalLinkT);
-		JointMatrix.SetGlobalRotation(GlobalLinkQ);
-		JointMatrix.SetGlobalScale(GlobalLinkS);
-		JointMatrix.BuildMatrix();
+		BonePosData.SetTranslation(LocalLinkT);
+		BonePosData.SetRotation(LocalLinkQ);
+		BonePosData.SetScale(LocalLinkS);
+		BonePosData.SetGlobalTranslation(GlobalLinkT);
+		BonePosData.SetGlobalRotation(GlobalLinkQ);
+		BonePosData.SetGlobalScale(GlobalLinkS);
+		BonePosData.BuildMatrix();
 	}
 
 	for (size_t i = 0; i < AllBones.size(); i++)

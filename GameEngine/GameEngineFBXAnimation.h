@@ -89,8 +89,11 @@ public:
 };
 
 // 
+class FBXAnimation;
 class GameEngineFBXAnimation : public GameEngineFBX
 {
+	friend FBXAnimation;
+
 private:
 	std::vector<FbxExAniData> AnimationDatas;
 

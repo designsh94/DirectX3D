@@ -165,7 +165,7 @@ bool GameEngineFBXAnimation::AnimationLoad(GameEngineFBXMesh* _Mesh, fbxsdk::Fbx
 					FbxExBoneFrameData& FrameData = Frame.BoneMatData[fixIndex];
 
 					currTime.SetFrame(fixIndex, timeMode);
-					currentTransformOffset = _Node->EvaluateGlobalTransform(currTime) * JointConvertMatrix * geometryTransform;
+					currentTransformOffset = _Node->EvaluateGlobalTransform(currTime) * JointMatrix * geometryTransform;
 					globalTransform = currentTransformOffset.Inverse() * pLinkNode->EvaluateGlobalTransform(currTime);
 
 					localTransform.SetS(pLinkNode->EvaluateLocalScaling(currTime));

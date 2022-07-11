@@ -149,6 +149,15 @@ class GameEngineShader;
 class GameEngineStructuredBuffer;
 class GameEngineStructuredBufferSetting : public GameEngineObjectNameBase
 {
+private:
+	static const char* LastSettingAddress;
+
+public:
+	static void ResetLastSetting()
+	{
+		LastSettingAddress = nullptr;
+	}
+
 public:
 	GameEngineShader* Shader;
 	GameEngineStructuredBuffer* Res_;
@@ -157,6 +166,24 @@ public:
 	const char* SettingData_;
 	char* NewData_;
 	size_t SettingDataSize_;
+
+public:
+	GameEngineStructuredBufferSetting() :
+		Shader(nullptr),
+		Res_(nullptr),
+		SettingIndex_(0),
+		Mode_(SettingMode::MAX),
+		SettingData_(nullptr),
+		NewData_(nullptr),
+		SettingDataSize_()
+	{
+
+	}
+
+	~GameEngineStructuredBufferSetting()
+	{
+		Clear();
+	}
 
 public:
 	void ShaderSetting()
@@ -169,16 +196,23 @@ public:
 		Shader->ReSetStructuredBuffer(this);
 	}
 
-public:
-	GameEngineStructuredBufferSetting()
-		: Res_(nullptr)
-		, Shader(nullptr)
-		, SettingIndex_(0)
+	void Clear()
 	{
+		if (nullptr != NewData_)
+		{
+			delete NewData_;
+		}
 
+		NewData_ = nullptr;
+		SettingData_ = nullptr;
 	}
 
-	~GameEngineStructuredBufferSetting()
+	void ChangeData()
 	{
+		if (SettingData_ != LastSettingAddress)
+		{
+			LastSettingAddress = SettingData_;
+			Res_->ChangeData(SettingData_, SettingDataSize_);
+		}
 	}
 };

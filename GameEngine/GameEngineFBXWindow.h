@@ -175,6 +175,9 @@ private:
 private:
 	void ActorController();							// 생성된 액터 위치/크기/회전 셋팅
 
+public: // 테스트용
+	void TestInit();
+
 public:
 };
 

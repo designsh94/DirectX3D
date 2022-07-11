@@ -8,7 +8,7 @@ GameEngineFBX::GameEngineFBX() :
 	Scene(nullptr),
 	RootNode(nullptr),
 	ConvertMatrix(),
-	JointConvertMatrix(),
+	JointMatrix(),
 	AxisVector()
 {
 }
@@ -89,6 +89,7 @@ bool GameEngineFBX::CreateFBXSystemInitialize(const std::string& _Path)
 
 void GameEngineFBX::FBXConvertScene()
 {
+	AxisVector = { 0.0f, 0.0f, 0.0f, 1.0f };
 	fbxsdk::FbxAxisSystem::EUpVector UpVector = fbxsdk::FbxAxisSystem::eYAxis;
 	fbxsdk::FbxAxisSystem::EFrontVector FrontVector = (fbxsdk::FbxAxisSystem::EFrontVector)-fbxsdk::FbxAxisSystem::eParityOdd;
 	fbxsdk::FbxAxisSystem::ECoordSystem CooreSystem = fbxsdk::FbxAxisSystem::ECoordSystem::eRightHanded;
@@ -158,11 +159,11 @@ void GameEngineFBX::FBXConvertScene()
 		}
 	}
 
-	JointConvertMatrix.SetR(AxisVector);
+	JointMatrix.SetR(AxisVector);
 
-	if (true == JointConvertMatrix.IsIdentity())
+	if (true == JointMatrix.IsIdentity())
 	{
-		JointConvertMatrix = ConvertMatrix;
+		JointMatrix = ConvertMatrix;
 	}
 
 	// 애니메이션도 행렬의 집합

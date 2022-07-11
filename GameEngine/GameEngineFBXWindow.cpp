@@ -685,3 +685,40 @@ void GameEngineFBXWindow::ActorController()
 		ActorSelect = -1;
 	}
 }
+
+void GameEngineFBXWindow::TestInit()
+{
+	static bool Once = false;
+
+	if (true == Once)
+	{
+		return;
+	}
+
+	// GameEngineFBXMesh* Mesh = GameEngineFBXMeshManager::GetInst().Load(FBXFilePath.PathToPlusFileName("Man38.FBX"));
+	GameEngineFBXMesh* Mesh = GameEngineFBXMeshManager::GetInst().Load(FBXFilePath.PathToPlusFileName("AnimMan.fbx"));
+	Mesh->CreateRenderingBuffer();
+
+
+	GameEngineActor* NewActor = GameEngineCore::CurrentLevel()->CreateActor<GameEngineActor>();
+	Actors.push_back(NewActor);
+
+	GameEngineFBXRenderer* Renderer = NewActor->CreateTransformComponent<GameEngineFBXRenderer>(NewActor->GetTransform());
+
+
+	// Renderer->SetFBXMesh("AnimMan.FBX", "Color");
+	Renderer->SetFBXMesh("AnimMan.FBX", "ColorAni");
+
+	for (UINT i = 0; i < Renderer->GetRenderSetCount(); i++)
+	{
+		Renderer->GetRenderSet(i).ShaderHelper->SettingConstantBufferSet("ResultColor", float4::RED);
+	}
+
+	GameEngineFBXAnimation* Animation = GameEngineFBXAnimationManager::GetInst().Load(FBXFilePath.PathToPlusFileName("ALS_N_Run_F.FBX"));
+
+
+	Renderer->CreateFBXAnimation("ALS_N_Run_F.FBX", "ALS_N_Run_F.FBX");
+	Renderer->ChangeFBXAnimation("ALS_N_Run_F.FBX");
+
+	Once = true;
+}

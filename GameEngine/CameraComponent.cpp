@@ -104,6 +104,9 @@ void CameraComponent::Render(float _DeltaTime)
 			Renderer->Render(_DeltaTime);
 		}
 	}
+
+	// 구조화버퍼 리셋
+	GameEngineStructuredBufferSetting::ResetLastSetting();
 }
 
 void CameraComponent::DebugRender()

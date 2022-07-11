@@ -77,7 +77,34 @@ public:
 	template<typename T>
 	void SettingStructuredBufferLink(const std::string& _SettingName, const T& _Data)
 	{
+		std::string UpperName = GameEngineString::toupper(_SettingName);
+		std::map<std::string, GameEngineStructuredBufferSetting>::iterator FindIter = AllStructuredBufferData_.find(UpperName);
+		if (FindIter == AllStructuredBufferData_.end())
+		{
+			GameEngineDebug::MsgBoxError("존재하지 않는 구조화 버퍼를 세팅하려고 했습니다." + UpperName);
+			return;
+		}
 
+		GameEngineStructuredBufferSetting& SettingData = FindIter->second;
+		SettingData.Mode_ = SettingMode::Link;
+		SettingData.SettingDataSize_ = sizeof(_Data);
+		SettingData.SettingData_ = reinterpret_cast<const char*>(&_Data);
+	}
+
+	void SettingStructuredBufferLink(const std::string& _SettingName, const void* _Data, size_t _Size)
+	{
+		std::string UpperName = GameEngineString::toupper(_SettingName);
+		std::map<std::string, GameEngineStructuredBufferSetting>::iterator FindIter = AllStructuredBufferData_.find(UpperName);
+		if (FindIter == AllStructuredBufferData_.end())
+		{
+			GameEngineDebug::MsgBoxError("존재하지 않는 구조화 버퍼를 세팅하려고 했습니다." + UpperName);
+			return;
+		}
+
+		GameEngineStructuredBufferSetting& SettingData = FindIter->second;
+		SettingData.Mode_ = SettingMode::Link;
+		SettingData.SettingDataSize_ = _Size;
+		SettingData.SettingData_ = reinterpret_cast<const char*>(_Data);
 	}
 
 public:
