@@ -54,7 +54,7 @@ fbxsdk::FbxNode* GameEngineFBXMesh::RecursiveFindParentLodGroup(fbxsdk::FbxNode*
 
 void GameEngineFBXMesh::MeshNodeCheck()
 {
-	// 
+	// 해당 Scene의 모든 정점의 수 Get
 	int geometryCount = Scene->GetGeometryCount();
 	for (int i = 0; i < geometryCount; i++)
 	{
@@ -62,7 +62,7 @@ void GameEngineFBXMesh::MeshNodeCheck()
 		fbxsdk::FbxGeometry* geoMetry = Scene->GetGeometry(i);
 		fbxsdk::FbxNode* geoMetryNode = geoMetry->GetNode();
 
-		// 추출한 것의 타입이 메쉬이라면
+		// 추출한 것의 타입이 메쉬라면
 		if (geoMetry->GetAttributeType() == fbxsdk::FbxNodeAttribute::eMesh)
 		{
 			MeshInfos.push_back(FbxExMeshInfo());
@@ -130,6 +130,7 @@ void GameEngineFBXMesh::MeshNodeCheck()
 		}
 	}
 
+	// LOD는 정점의 갯수로 저장
 	std::multimap<int, FbxExMeshInfo*> LodCheckMap;
 	for (int i = 0; i < MeshInfos.size(); i++)
 	{
@@ -344,6 +345,7 @@ void GameEngineFBXMesh::LoadNormal(fbxsdk::FbxMesh* _Mesh, fbxsdk::FbxAMatrix _M
 
 void GameEngineFBXMesh::VertexBufferCheck()
 {
+	// 얻어온 정점 정보를 이용하여 버텍스버퍼 생성
 	size_t meshInfoSize = MeshInfos.size();
 	for (size_t meshInfoIndex = 0; meshInfoIndex < meshInfoSize; ++meshInfoIndex)
 	{
@@ -374,11 +376,9 @@ void GameEngineFBXMesh::VertexBufferCheck()
 
 		// FBX 파일내에 담겨있는 포지션 데이터
 		fbxsdk::FbxVector4* pControlPoints = pMesh->GetControlPoints();
-
 		VtxData.resize(controlPointsCount);
 
 		fbxsdk::FbxAMatrix meshMatrix = ConvertMatrix;
-
 		meshMatrix = ComputeTotalMatrix(pMeshNode);
 
 		if (false == meshInfo.bIsSkelMesh)

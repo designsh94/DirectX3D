@@ -58,7 +58,6 @@ bool GameEngineFBX::CreateFBXSystemInitialize(const std::string& _Path)
 	}
 
 	// FBX Class로 장면
-	// 2번인자 : 추가옵션(옵션없이 생성가능)
 	Scene = fbxsdk::FbxScene::Create(Manager, "");
 	if (nullptr == Scene)
 	{
@@ -73,8 +72,14 @@ bool GameEngineFBX::CreateFBXSystemInitialize(const std::string& _Path)
 	Importer = fbxsdk::FbxImporter::Create(Manager, "");
 	if (false == Importer->Initialize(GameEngineString::AnsiToUTF8Return(_Path).c_str(), -1, IOSetting))
 	{
+		// FBX File Load를 위한 객체(Importer) 초기화 실패로 로드에 필요한 객체 모두 소멸
+		// 실패요인
+		// 1) 경로이상인 경우 초기화 실패사유가 될 수 있다.
 		Importer->Destroy();
 		IOSetting->Destroy();
+		Scene->Destroy();
+
+		// 
 		GameEngineDebug::MsgBoxError("FBX 로드 이니셜라이즈 실패.");
 		return false;
 	}
