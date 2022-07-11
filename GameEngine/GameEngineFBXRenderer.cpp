@@ -23,7 +23,7 @@ void FBXAnimation::Init()
     PixAniData = &Animation->AnimationDatas[0];
     Start = 0;
     End = static_cast<UINT>(PixAniData->AniFrameData[0].BoneMatData.size());
-    FrameTime = 0.1f;
+    FrameTime = 0.02f;
 }
 
 void FBXAnimation::Update(float _DeltaTime)

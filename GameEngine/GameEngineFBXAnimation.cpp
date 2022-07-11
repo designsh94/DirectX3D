@@ -12,13 +12,17 @@ GameEngineFBXAnimation::~GameEngineFBXAnimation()
 
 void GameEngineFBXAnimation::Load(const std::string& _Path) 
 {
+	// FBX File 로드를 위한 매니저 생성 및 매니저를 이용한 각 객체(클래스) 생성
 	if (false == CreateFBXSystemInitialize(_Path))
 	{
 		GameEngineDebug::MsgBoxError("FBX 이니셜라이즈에 실패했습니다.");
 		return;
 	}
 
+	// 변환
 	FBXConvertScene();
+
+	// 애니메이션 정보 로드 및 필요정보 저장
 	CheckAnimation();
 }
 
@@ -187,15 +191,15 @@ bool GameEngineFBXAnimation::AnimationLoad(GameEngineFBXMesh* _Mesh, fbxsdk::Fbx
 	return true;
 }
 
-fbxsdk::FbxAMatrix GameEngineFBXAnimation::GetGeometryTransformation(fbxsdk::FbxNode* _pNode)
-{
-	// 노드에 존재하는 정보들을 종합해서 행렬로 리턴
-	fbxsdk::FbxVector4 translation = _pNode->GetGeometricTranslation(fbxsdk::FbxNode::eSourcePivot);
-	fbxsdk::FbxVector4 rotation = _pNode->GetGeometricRotation(fbxsdk::FbxNode::eSourcePivot);
-	fbxsdk::FbxVector4 scale = _pNode->GetGeometricScaling(fbxsdk::FbxNode::eSourcePivot);
-
-	return fbxsdk::FbxAMatrix(translation, rotation, scale);
-}
+//fbxsdk::FbxAMatrix GameEngineFBXAnimation::GetGeometryTransformation(fbxsdk::FbxNode* _pNode)
+//{
+//	// 노드에 존재하는 정보들을 종합해서 행렬로 리턴
+//	fbxsdk::FbxVector4 translation = _pNode->GetGeometricTranslation(fbxsdk::FbxNode::eSourcePivot);
+//	fbxsdk::FbxVector4 rotation = _pNode->GetGeometricRotation(fbxsdk::FbxNode::eSourcePivot);
+//	fbxsdk::FbxVector4 scale = _pNode->GetGeometricScaling(fbxsdk::FbxNode::eSourcePivot);
+//
+//	return fbxsdk::FbxAMatrix(translation, rotation, scale);
+//}
 
 void GameEngineFBXAnimation::CalFbxExBoneFrameTransMatrix(GameEngineFBXMesh* _Mesh)
 {
@@ -210,8 +214,11 @@ void GameEngineFBXAnimation::CalFbxExBoneFrameTransMatrix(GameEngineFBXMesh* _Me
 		AnimationDatas[i].AniFrameData.resize(_Mesh->AllBones.size());
 	}
 
-	// 
+	// 애니메이션 로드
 	ProcessAnimationLoad(_Mesh, _Mesh->RootNode);
+
+	// 로드된 정보에서 비어있는 정보를 기본값으로 셋팅
+	ProcessAnimationCheckState(_Mesh);
 }
 
 void GameEngineFBXAnimation::ProcessAnimationLoad(GameEngineFBXMesh* _Mesh, fbxsdk::FbxNode* _pNode)
@@ -242,5 +249,54 @@ void GameEngineFBXAnimation::ProcessAnimationLoad(GameEngineFBXMesh* _Mesh, fbxs
 	for (int n = 0; n < _pNode->GetChildCount(); ++n)
 	{
 		ProcessAnimationLoad(_Mesh, _pNode->GetChild(n));
+	}
+}
+
+void GameEngineFBXAnimation::ProcessAnimationCheckState(GameEngineFBXMesh* _Fbx)
+{
+	size_t userAniDataSize = AnimationDatas.size();
+	for (size_t userAniDataIndex = 0; userAniDataIndex < userAniDataSize; ++userAniDataIndex)
+	{
+		FbxExAniData& userAniData = AnimationDatas.at(userAniDataIndex);
+		fbxsdk::FbxLongLong fbxTime = userAniData.EndTime.Get() - userAniData.StartTime.Get() + 1;
+		size_t aniFrameDataSize = userAniData.AniFrameData.size();
+		for (size_t aniFrameDataIndex = 0; aniFrameDataIndex < aniFrameDataSize; ++aniFrameDataIndex)
+		{
+			FbxExBoneFrame& aniFrameData = userAniData.AniFrameData.at(aniFrameDataIndex);
+			if (0 == aniFrameData.BoneMatData.size())
+			{
+				aniFrameData.BoneMatData.resize(fbxTime);
+				Bone& curBone = _Fbx->AllBones[aniFrameDataIndex];
+				aniFrameData.BoneIndex = curBone.Index;
+				aniFrameData.BoneParentIndex = curBone.ParentIndex;
+				if (-1 != curBone.ParentIndex)
+				{
+					FbxExBoneFrame& parentAniFrameData = userAniData.AniFrameData.at(curBone.ParentIndex);
+					for (fbxsdk::FbxLongLong start = 0; start < fbxTime; ++start)
+					{
+						aniFrameData.BoneMatData[start].Time = parentAniFrameData.BoneMatData[start].Time;
+						aniFrameData.BoneMatData[start].LocalAnimation = float4x4ToFbxAMatrix(curBone.BonePos.Local);
+						aniFrameData.BoneMatData[start].GlobalAnimation = parentAniFrameData.BoneMatData[start].GlobalAnimation * aniFrameData.BoneMatData[start].LocalAnimation;
+						aniFrameData.BoneMatData[start].FrameMat = FbxMatTofloat4x4(aniFrameData.BoneMatData[start].GlobalAnimation);
+						aniFrameData.BoneMatData[start].S = FbxVecTofloat4(aniFrameData.BoneMatData[start].GlobalAnimation.GetS());
+						aniFrameData.BoneMatData[start].Q = FbxQuaternionTofloat4(aniFrameData.BoneMatData[start].GlobalAnimation.GetQ());
+						aniFrameData.BoneMatData[start].T = FbxVecToTransform(aniFrameData.BoneMatData[start].GlobalAnimation.GetT());
+					}
+				}
+				else
+				{
+					for (fbxsdk::FbxLongLong start = 0; start < fbxTime; ++start)
+					{
+						aniFrameData.BoneMatData[start].Time = 0;
+						aniFrameData.BoneMatData[start].LocalAnimation = float4x4ToFbxAMatrix(curBone.BonePos.Local);
+						aniFrameData.BoneMatData[start].GlobalAnimation = aniFrameData.BoneMatData[start].LocalAnimation;
+						aniFrameData.BoneMatData[start].FrameMat = FbxMatTofloat4x4(aniFrameData.BoneMatData[start].GlobalAnimation);
+						aniFrameData.BoneMatData[start].S = FbxVecTofloat4(aniFrameData.BoneMatData[start].GlobalAnimation.GetS());
+						aniFrameData.BoneMatData[start].Q = FbxQuaternionTofloat4(aniFrameData.BoneMatData[start].GlobalAnimation.GetQ());
+						aniFrameData.BoneMatData[start].T = FbxVecToTransform(aniFrameData.BoneMatData[start].GlobalAnimation.GetT());
+					}
+				}
+			}
+		}
 	}
 }

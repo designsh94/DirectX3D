@@ -14,23 +14,24 @@ public:
 class FbxExRenderingPipeLineSettingData
 {
 public:
-	std::string Name;
+	std::string Name;				// 
 
-	// 픽셀쉐이더에서 그냥 최종색상에 곱해주면 되는 색상
-	float4			 DifColor;
-	float4			 AmbColor; // 빛
-	float4			 SpcColor; // 빛
-	float4			 EmvColor; // 빛
-	float			 SpecularPower;		// 빛의 강도
-	float			 TransparencyFactor;	// 빛의 강도
-	float			 Shininess;			// 빛의 강도
-	std::string DifTexturePath;	// 텍스처경로 
-	std::string NorTexturePath; // 텍스처경로
-	std::string SpcTexturePath; // 텍스처경로
+public:	// 픽셀쉐이더에서 최종색상에 곱해주면 되는 색상
+	float4 DifColor;				// 분산색 : 난반사로 인해 조명에 상관없이 관측자에게 동일하게 보여지는 색
+	float4 AmbColor;				// 주변색 : 빛이 없을때 마치 주변으로부터의 반사된 빛이 나타내는것처럼 보여질 색
+	float4 SpcColor;				// 반사색 : 주광이 반사되어 관측자에게 향할때 보여지는 색
+	float4 EmvColor;				// 발광색 : 스스로 빛을 발산하는 색
+	float SpecularPower;			// 반사의 정도
+	float TransparencyFactor;		// 
+	float Shininess;				// 빛의 정도
 
-	std::string DifTextureName;	// 텍스처이름 
-	std::string NorTextureName; // 텍스처이름
-	std::string SpcTextureName; // 텍스처이름
+public: // 각 텍스쳐 Path & Name
+	std::string DifTexturePath;		// Diffuse Texture Path
+	std::string NorTexturePath;		// NormalMap Texture Path
+	std::string SpcTexturePath;		// Specular Texture Path
+	std::string DifTextureName;		// Diffuse Texutre Name
+	std::string NorTextureName;		// NormalMap Texture Name
+	std::string SpcTextureName;		// Specular Texture Name
 
 public:
 	FbxExRenderingPipeLineSettingData() :
@@ -100,23 +101,23 @@ public:
 
 struct JointPos
 {
-	float4 Scale;
-	float4 Rotation; // 쿼터니온.
-	float4 Translation;
+	float4 Scale;					// 
+	float4 Rotation;				// 
+	float4 Translation;				// 
 
-	float4 GlobalScale;
-	float4 GlobalRotation;
-	float4 GlobalTranslation;
+	float4 GlobalScale;				// 
+	float4 GlobalRotation;			// 
+	float4 GlobalTranslation;		// 
+	
+	float4x4 Offset;				// 
+	float4x4 SotredOffset;			// 
+	float4x4 Local;					// 
+	float4x4 Global;				// 
 
-	float4x4 Offset;
-	float4x4 SotredOffset;
-	float4x4 Local;
-	float4x4 Global;
-
-	float Length;
-	float XSize;
-	float YSize;
-	float ZSize;
+	float Length;					// 
+	float XSize;					// 
+	float YSize;					// 
+	float ZSize;					// 
 
 	void BuildMatrix()
 	{

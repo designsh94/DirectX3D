@@ -32,15 +32,15 @@ public:
 class FbxExAniData
 {
 public:
-	std::string				AniName;
-	fbxsdk::FbxTime			StartTime; // 설정된 애니메이션 시간
-	fbxsdk::FbxTime			EndTime; // 
-	fbxsdk::FbxLongLong		TimeStartCount;
-	fbxsdk::FbxLongLong		TimeEndCount;
-	fbxsdk::FbxLongLong		FrameCount;
-	fbxsdk::FbxTime::EMode	TimeMode;
-	__int64					FbxModeCount;
-	double					FbxModeRate;
+	std::string				AniName;			// 
+	fbxsdk::FbxTime			StartTime;			// 설정된 애니메이션 시간
+	fbxsdk::FbxTime			EndTime;			// 
+	fbxsdk::FbxLongLong		TimeStartCount;		// 
+	fbxsdk::FbxLongLong		TimeEndCount;		// 
+	fbxsdk::FbxLongLong		FrameCount;			// 
+	fbxsdk::FbxTime::EMode	TimeMode;			// 
+	__int64					FbxModeCount;		// 
+	double					FbxModeRate;		// 
 
 	std::vector<FbxExBoneFrame> AniFrameData;	// Ex) 애니메이션에 100개의 본의 애니메이션 데이터가 있다.
 
@@ -118,15 +118,27 @@ public:
 		return AnimationDatas.size();
 	}
 
+	inline fbxsdk::FbxAMatrix GetGeometryTransformation(fbxsdk::FbxNode* _pNode)
+	{
+		// 노드에 존재하는 정보들을 종합해서 행렬로 리턴
+		fbxsdk::FbxVector4 translation = _pNode->GetGeometricTranslation(fbxsdk::FbxNode::eSourcePivot);
+		fbxsdk::FbxVector4 rotation = _pNode->GetGeometricRotation(fbxsdk::FbxNode::eSourcePivot);
+		fbxsdk::FbxVector4 scale = _pNode->GetGeometricScaling(fbxsdk::FbxNode::eSourcePivot);
+
+		return fbxsdk::FbxAMatrix(translation, rotation, scale);
+	}
+
 public:
 	bool LoadAnimation();
 	void Load(const std::string& _Path);
 
 public:
 	bool AnimationLoad(GameEngineFBXMesh* _Mesh, fbxsdk::FbxNode* _Node);
-	fbxsdk::FbxAMatrix GetGeometryTransformation(fbxsdk::FbxNode* _pNode);
+	
+public:
 	void CalFbxExBoneFrameTransMatrix(GameEngineFBXMesh* _Mesh);
-	void ProcessAnimationLoad(GameEngineFBXMesh* _Mesh, fbxsdk::FbxNode* _pNode);
+	void ProcessAnimationLoad(GameEngineFBXMesh* _Mesh, fbxsdk::FbxNode* _pNode);	// 애니메이션 로드
+	void ProcessAnimationCheckState(GameEngineFBXMesh* _Fbx);						// 애니메이션을 로드했으나 FbxExBoneFrame의 BoneMatData가 비어있는 경우 기본정보로 셋팅
 
 public:
 };

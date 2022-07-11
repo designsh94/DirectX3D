@@ -17,18 +17,27 @@
 
 // 분류 : 
 // 용도 : 
-// 설명 : 
+// 설명 : FBX File 로드 및 정보 수집(FBX File은 트리노드형식으로 구성)
+//		  1) FBX Load를 위해 fbxsdk::FbxManager를 생성(객체화)
+//		  2) fbxsdk::FbxManager를 이용하여 Scene을 생성(보통의 경우 FBX File한개당 Scene을 한개 요구)
+//		  3) fbxsdk::FbxManager를 이용하여 FBX File Load 형식을 정의하는 fbxsdk::FbxIOSettings 생성(IOSROOT)
+//		  4) fbxsdk::FbxManager를 이용하여 fbxsdk::FbxImporter 생성
+//		  5) fbxsdk::FbxImporter를 초기화 -> FBX File이 있는 경로+파일명을 전달
+//		  6) FBX File Load를 위한 준비완료 -> Import를 소멸시키게되면 메모리소모를 줄일수있음
+//		  7) 
 class GameEngineFBX : public GameEngineObjectNameBase
 {
+protected: // FBX File Load 준비를 위한 객체 생성 및 Scene Get
+	fbxsdk::FbxManager* Manager;				// FBX File 로드 및 관리 인터페이스제공 - 싱글톤형식
+	fbxsdk::FbxIOSettings* IOSetting;			// FBX File을 읽는 방법을 정의 - 싱글톤형식
+	fbxsdk::FbxImporter* Importer;				// 씬(Scene)의 요소를 파일에서 가져오거나 파일로 내보낼지 여부를 지정
+	fbxsdk::FbxScene* Scene;					// FBX File에서 씬(Scene)을 로드하기 위해 씬 컨테이너용 객체
+
 protected:
-	fbxsdk::FbxManager* Manager;
-	fbxsdk::FbxIOSettings* IOSetting;
-	fbxsdk::FbxImporter* Importer;
-	fbxsdk::FbxScene* Scene;
-	fbxsdk::FbxNode* RootNode;
-	fbxsdk::FbxAMatrix ConvertMatrix;
-	fbxsdk::FbxAMatrix JointMatrix;
-	fbxsdk::FbxVector4 AxisVector;
+	fbxsdk::FbxNode* RootNode;					// 해당 FBX File의 Scene을 구성하는 최상위노드(루트노드)
+	fbxsdk::FbxAMatrix ConvertMatrix;			// 
+	fbxsdk::FbxAMatrix JointMatrix;				// 
+	fbxsdk::FbxVector4 AxisVector;				// 
 
 public:
 	GameEngineFBX();

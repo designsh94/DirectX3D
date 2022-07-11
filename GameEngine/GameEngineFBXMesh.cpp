@@ -18,13 +18,14 @@ GameEngineFBXMesh::~GameEngineFBXMesh()
 
 void GameEngineFBXMesh::Load(const std::string& _Path) 
 {
+	// FBX File 로드 및 정보수집을 위한 초기화
 	if (false == CreateFBXSystemInitialize(_Path))
 	{
 		GameEngineDebug::MsgBoxError("FBX 이니셜라이즈에 실패했습니다.");
 		return;
 	}
 
-	// 변환
+	// 축시스템 변환
 	FBXConvertScene();
 
 	// 정점데이터 수집
@@ -53,6 +54,7 @@ fbxsdk::FbxNode* GameEngineFBXMesh::RecursiveFindParentLodGroup(fbxsdk::FbxNode*
 
 void GameEngineFBXMesh::MeshNodeCheck()
 {
+	// 
 	int geometryCount = Scene->GetGeometryCount();
 	for (int i = 0; i < geometryCount; i++)
 	{
@@ -617,7 +619,6 @@ void GameEngineFBXMesh::DrawSetWeightAndIndexSetting(FbxMeshSet* _DrawSet, fbxsd
 void GameEngineFBXMesh::FbxMeshSetMaterialSetting(fbxsdk::FbxNode* _Node, FbxMeshSet* _RenderData)
 {
 	int MtrlCount = _Node->GetMaterialCount();
-
 	if (MtrlCount > 0)
 	{
 		_RenderData->MatialData.push_back(std::vector<FbxExRenderingPipeLineSettingData>());
