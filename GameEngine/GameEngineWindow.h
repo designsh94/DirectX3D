@@ -54,33 +54,33 @@ private:
 	int CreateMainWindowClass();
 
 public:
+	inline HWND  GetWindowHWND()
+	{
+		return windowhandle_;
+	}
+
+	inline HDC  GetWindowDC()
+	{
+		return devicecontext_;
+	}
+
+	inline float4 GetSize()
+	{
+		return size_;
+	}
+
+	inline float4 GetPos()
+	{
+		return pos_;
+	}
+
+public:
 	void CreateMainWindow(const std::string& _titlename, const float4& _size, const float4& _pos);
 	void SetSizeAndPos(const float4& _size, const float4& _pos);
 	void Loop(void(*_loopFunc)());
 
 public:
 	bool IsWindowRangeOut(const float4& _Pos);
-
-public:
-	HWND  GetWindowHWND()
-	{
-		return windowhandle_;
-	}
-
-	HDC  GetWindowDC()
-	{
-		return devicecontext_;
-	}
-
-	float4 GetSize()
-	{
-		return size_;
-	}
-
-	float4 GetPos()
-	{
-		return pos_;
-	}
 
 public:
 	void CloseWindow();
