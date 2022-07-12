@@ -949,6 +949,7 @@ bool GameEngineFBXMesh::RetrievePoseFromBindPose(fbxsdk::FbxScene* pScene, const
 					else
 					{
 						fbxsdk::FbxNode* ParentNode = Current->GetParent();
+						
 						while (ParentNode)
 						{
 							fbxsdk::FbxNodeAttribute* Attr = ParentNode->GetNodeAttribute();
@@ -967,6 +968,7 @@ bool GameEngineFBXMesh::RetrievePoseFromBindPose(fbxsdk::FbxScene* pScene, const
 						}
 						else
 						{
+							// 포즈(Pose)에 관련없는 Mesh인경우
 							std::string ErrorString = Status.GetErrorString();
 							std::string CurrentName = Current->GetName();
 
@@ -1107,6 +1109,7 @@ bool GameEngineFBXMesh::ImportBone()
 
 	fbxsdk::PoseList PoseArray;
 
+	// 
 	if (RetrievePoseFromBindPose(Scene, NodeArray, PoseArray) == false)
 	{
 		const int PoseCount = Scene->GetPoseCount();

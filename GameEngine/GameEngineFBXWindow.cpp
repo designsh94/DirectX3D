@@ -198,6 +198,24 @@ void GameEngineFBXWindow::OnGUI()
 			{
 				// 중복선택
 				GameEngineDebug::MsgBox("이미 로드한 매쉬정보가 존재합니다");
+
+				// 혹시모르니 상태값 체크
+				std::map<std::string, LoadInfoState>::iterator FindIter = FileState.find(AllFileNames[FBXFileSelect]);
+				if (FileState.end() != FindIter)
+				{
+					if (LoadState::MESH != (*FindIter).second.GetLoadInfoState() && LoadState::ANIMATION != (*FindIter).second.GetLoadInfoState())
+					{
+						(*FindIter).second.MeshLoadFinish();
+					}
+					else if (LoadState::MESH != (*FindIter).second.GetLoadInfoState() && LoadState::ANIMATION == (*FindIter).second.GetLoadInfoState())
+					{
+						(*FindIter).second.AllLoadFinish();
+					}
+					else if (LoadState::MESH != (*FindIter).second.GetLoadInfoState() && LoadState::ANIMATION != (*FindIter).second.GetLoadInfoState() && LoadState::ALL == (*FindIter).second.GetLoadInfoState())
+					{
+						(*FindIter).second.AllLoadFinish();
+					}
+				}
 			}
 		}
 	}
